@@ -1,7 +1,7 @@
 # SEOAH.STUDIO 프로젝트 상태 보고서
 
-> **최종 갱신일:** 2026-03-17 (설정: 가입일·마케팅 토글 반영, Edge Function 환경변수 검증)  
-> **기준 문서:** full_spec_v2_2_final.html (기능정의서 + 화면설계서 v2.2)
+> **최종 갱신일:** 2026-09-28 (리뉴얼 Step 4: MY SEOA UI)  
+> **기준 문서:** full_spec_v2_2_final.html (기능정의서 + 화면설계서 v2.2), SEOAH_STUDIO_Master_Planning_v4.html
 
 ---
 
@@ -64,9 +64,42 @@
 | 정책 | M-001~004, M-007, M-008 완료 | ✅ 완료 | 이용약관·회원탈퇴·환불·마케팅·미성년자 |
 | 정책 | M-009 templatesMock DEV 폴백 | ✅ 완료 | Supabase 미설정 시 목업 폴백 |
 
+### 1.3 리뉴얼 Step 1 — 셸 (2026-09-27)
+
+| 구분 | 항목 | 상태 | 비고 |
+|------|------|------|------|
+| UI | Design token (Deep Ink / Soft White / Signal Blue) | ✅ 완료 | `tailwind.config.js`, `src/index.css`. 기존 `primary`는 Signal Blue 별칭 |
+| UI | App Shell, Public GNB, Footer, PageContainer | ✅ 완료 | Legacy 라우트 유지. Admin에서는 푸터 숨김 유지 |
+| UI | Button, SectionHeading, 타이포(Pretendard) | ✅ 완료 | 홈 섹션 제목에 SectionHeading 적용. 본문 카드·플로우는 유지 |
+| 범위 | DB, RLS, 결제, Edge Function, Auth, Admin 로직 | 미변경 | Legacy Commerce 유지 |
+
+### 1.4 리뉴얼 Step 2 — Public Website (2026-09-27)
+
+| 구분 | 항목 | 상태 | 비고 |
+|------|------|------|------|
+| UI | Home 및 Public IA | ✅ 완료 | `/ready` `/brand` `/studio` `/care` `/saas` `/work` `/about` `/faq` `/contact` |
+| UI | GNB | ✅ 완료 | Ready, Studio, Care, SaaS, Work, About, Contact, Login, 프로젝트 의뢰하기 |
+| 데이터 | FAQ 조회 | ✅ 완료 | 기존 `faqs` SELECT만. 스키마 변경 없음 |
+| UI | Home visual refinement | ✅ 완료 | 섹션 폭 1280px, Hero 1360px. 라우트·카피·저장 로직 유지 |
+| UI | Home conversion polish | ✅ 완료 | Hero composition, Ready preview, Care/Work/Footer. DB·저장 로직 미변경 |
+| 데이터 | Guest Contact | ✅ 코드 완료 | `submit-contact` 작성. 첨부 입력은 화면에서 제거. migration 020과 함수 배포는 Supabase 프로젝트 연결 후 |
+| 인증 | 회원가입 / account_type | ✅ 완료 | `/signup`, `/account-type`. `users.account_type`는 nullable. `is_admin` 유지 |
+| 범위 | Lead, Studio 의뢰 저장 | 미구현 | Step 5 이후. 이번 단계에서 시작하지 않음 |
+| UI | MY SEOA 포털 | ✅ 화면만 | `/my` 및 하위 화면. 데이터는 빈 상태. DB·기존 `/mypage` 유지 |
+
 ---
 
 ## 2. 구현 예정 (미완료)
+
+### 2.0 리뉴얼 다음 단계 (Step 4 이후, 승인 전 착수 금지)
+
+| # | 항목 | 비고 |
+|---|------|------|
+| R1 | Public IA 페이지 (Brand, Studio, SaaS, Work, About, Contact) | ✅ Step 2에서 페이지 생성 |
+| R2 | 회원가입 Individual / Business | ✅ Step 3. Guest Contact 포함. 첨부 저장·문의 이메일 자동 연결은 이후 |
+| R3 | MY SEOA 데이터 연결 | UI skeleton은 Step 4. 주문·다운로드·문의 조회는 아직 연결하지 않음 |
+| R4 | Studio Lead, `/admin/leads` | 기존 AdminPage 탭 분리는 별도 작업 |
+| R5 | engagements 스키마 | V1.5. 기존 `projects` 재사용 금지 |
 
 ### 2.1 Phase F (P1)
 
@@ -143,6 +176,16 @@
 | faq_search_logs, 검색어 분석 | | ⬜ |
 | SEO/OG 메타 보완 | 일부 | ⬜ |
 
+### 리뉴얼 Step 3
+
+| 항목 | 완료 | 미완료 |
+|------|:----:|:------:|
+| Guest Contact 저장 (Edge Function) | ✅ | |
+| users.account_type / 회원가입 | ✅ | |
+| Contact 첨부파일 Storage | | ⬜ |
+| 가입 후 guest 문의 이메일 자동 연결 | | ⬜ |
+| MY SEOA 화면 | ✅ | 데이터 연결 ⬜ |
+
 ---
 
 ## 5. 사용자 직접 작업 항목 & 방법
@@ -162,6 +205,7 @@ supabase db push
    - `supabase/migrations/017_refund_requests_and_bucket.sql`
    - `supabase/migrations/018_orders_refund_columns.sql`
    - `supabase/migrations/019_refund_attachments_bucket.sql`
+   - `supabase/migrations/020_guest_inquiries_account_type.sql`
 
 > ⚠ v2.1 마이그레이션(009~015)이 아직 적용되지 않았다면, 먼저 001~015를 순서대로 적용한 후 016~019를 적용하세요.
 
@@ -179,7 +223,10 @@ supabase functions deploy submit-chatbot-inquiry
 supabase functions deploy submit-refund-request
 supabase functions deploy process-refund
 supabase functions deploy delete-account
+supabase functions deploy submit-contact --no-verify-jwt
 ```
+
+`submit-contact`는 챗봇 함수와 같이 JWT 검증을 끄고 배포합니다. 함수 안에서 로그인 토큰만 따로 확인합니다.
 
 ---
 
@@ -201,7 +248,7 @@ Supabase 대시보드 → Project Settings → Edge Functions → Secrets
 
 | 검증 변수 | 적용 함수 |
 |-----------|-----------|
-| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | ai-customize, verify-payment, process-refund, submit-refund-request, submit-chatbot-inquiry, get-download-url, delete-account |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | ai-customize, verify-payment, process-refund, submit-refund-request, submit-chatbot-inquiry, submit-contact, get-download-url, delete-account |
 | `ADMIN_EMAIL` | 검증 없음 (선택 변수, 없으면 해당 기능 건너뜀) |
 
 ---

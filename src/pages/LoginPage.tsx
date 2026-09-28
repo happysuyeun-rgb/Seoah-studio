@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
 
@@ -96,6 +96,12 @@ export function LoginPage() {
           </button>
         </div>
         <p className="mt-6 text-center text-xs text-gray-400">로그인 시 이용약관에 동의합니다.</p>
+        <p className="mt-4 text-center text-sm text-gray-600">
+          계정이 없으신가요?{' '}
+          <Link to="/signup" className="font-medium text-primary hover:underline">
+            회원가입
+          </Link>
+        </p>
 
         {import.meta.env.DEV && (
           <div className="mt-8 rounded-lg border-2 border-amber-400 bg-gray-100 p-4">

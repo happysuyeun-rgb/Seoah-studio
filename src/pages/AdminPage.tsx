@@ -189,16 +189,29 @@ export function AdminPage() {
   const { data: adminInquiries = [] } = useQuery({
     queryKey: ['admin-inquiries'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const next = await supabase
         .from('inquiries')
-        .select('id, subject, body, type, status, admin_reply, replied_at, created_at, user_id')
+        .select('id, subject, body, type, inquiry_type, status, admin_reply, replied_at, created_at, user_id, email')
         .order('created_at', { ascending: false })
+      const { data, error } = next.error
+        ? await supabase
+            .from('inquiries')
+            .select('id, subject, body, type, status, admin_reply, replied_at, created_at, user_id')
+            .order('created_at', { ascending: false })
+        : next
       if (error) throw error
-      const rows = (data ?? []) as { id: string; subject: string; body: string; type: string | null; status: string; admin_reply: string | null; replied_at: string | null; created_at: string; user_id: string }[]
-      const userIds = [...new Set(rows.map((r) => r.user_id))]
-      const { data: usersData } = await supabase.from('users').select('id, email').in('id', userIds)
-      const emailMap = Object.fromEntries(((usersData ?? []) as { id: string; email: string }[]).map((u) => [u.id, u.email]))
-      return rows.map((r) => ({ ...r, userEmail: emailMap[r.user_id] ?? '-' }))
+      const rows = (data ?? []) as { id: string; subject: string; body: string; type: string | null; inquiry_type: string | null; status: string; admin_reply: string | null; replied_at: string | null; created_at: string; user_id: string | null; email: string | null }[]
+      const userIds = [...new Set(rows.map((r) => r.user_id).filter((id): id is string => Boolean(id)))]
+      const emailMap: Record<string, string> = {}
+      if (userIds.length > 0) {
+        const { data: usersData } = await supabase.from('users').select('id, email').in('id', userIds)
+        for (const userRow of (usersData ?? []) as { id: string; email: string }[]) emailMap[userRow.id] = userRow.email
+      }
+      return rows.map((r) => ({
+        ...r,
+        userEmail: r.user_id ? (emailMap[r.user_id] ?? '-') : (r.email ?? '-'),
+        isGuest: !r.user_id,
+      }))
     },
     enabled: tab === 'inquiries',
   })
@@ -666,8 +679,8 @@ export function AdminPage() {
                 {adminInquiries.map((i) => (
                   <tr key={i.id} className="border-b">
                     <td className="py-2">{i.subject}</td>
-                    <td className="py-2">{(i as { type?: string | null }).type ?? '-'}</td>
-                    <td className="py-2">{(i as { userEmail?: string }).userEmail ?? '-'}</td>
+                    <td className="py-2">{i.inquiry_type ?? i.type ?? '-'}</td>
+                    <td className="py-2">{i.isGuest ? (i.userEmail !== '-' ? `Guest · ${i.userEmail}` : 'Guest') : (i.userEmail ?? '-')}</td>
                     <td className="py-2">
                       <span className={`rounded px-2 py-0.5 text-xs ${i.status === 'replied' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
                         {i.status === 'replied' ? '답변완료' : '접수'}

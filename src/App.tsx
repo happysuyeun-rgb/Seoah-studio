@@ -1,9 +1,9 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { supabase } from './lib/supabase'
 import { useAuthStore, getDevMockAuth } from './store/authStore'
-import { GNB } from './components/GNB'
+import { AppShell } from './components/shell/AppShell'
 import { ChatbotWidget } from './components/ChatbotWidget'
 import { DevFloatingButtons } from './components/DevFloatingButtons'
 import { ProtectedRoute } from './components/ProtectedRoute'
@@ -11,7 +11,18 @@ import { AdminRoute } from './components/AdminRoute'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Toast } from './components/Toast'
 import { HomePage } from './pages/HomePage'
+import { ReadyPage } from './pages/ReadyPage'
+import { BrandPage } from './pages/BrandPage'
+import { StudioPage } from './pages/StudioPage'
+import { CarePage } from './pages/CarePage'
+import { SaasPage } from './pages/SaasPage'
+import { WorkPage } from './pages/WorkPage'
+import { AboutPage } from './pages/AboutPage'
+import { FaqPage } from './pages/FaqPage'
+import { ContactPage } from './pages/ContactPage'
 import { LoginPage } from './pages/LoginPage'
+import { SignupPage } from './pages/SignupPage'
+import { AccountTypePage } from './pages/AccountTypePage'
 import { AuthCallbackPage } from './pages/AuthCallbackPage'
 import { TemplateGalleryPage } from './pages/TemplateGalleryPage'
 import { TemplateDetailPage } from './pages/TemplateDetailPage'
@@ -30,7 +41,17 @@ import { PrivacyPage } from './pages/PrivacyPage'
 import { RefundPage } from './pages/RefundPage'
 import { MyPageSettingsPage } from './pages/MyPageSettingsPage'
 import { RefundRequestPage } from './pages/RefundRequestPage'
-import { Footer } from './components/Footer'
+import { MySeoLayout } from './features/my-seoa/layouts/MySeoLayout'
+import { DashboardPage } from './features/my-seoa/pages/DashboardPage'
+import { PurchasesPage } from './features/my-seoa/pages/PurchasesPage'
+import { PurchaseDetailPage } from './features/my-seoa/pages/PurchaseDetailPage'
+import { ProjectsPage } from './features/my-seoa/pages/ProjectsPage'
+import { ProjectDetailPage } from './features/my-seoa/pages/ProjectDetailPage'
+import { ProposalDetailPage, ProposalsPage } from './features/my-seoa/pages/ProposalsPage'
+import { BillingPage } from './features/my-seoa/pages/BillingPage'
+import { MySupportPage } from './features/my-seoa/pages/MySupportPage'
+import { NotificationsPage } from './features/my-seoa/pages/NotificationsPage'
+import { AccountPage } from './features/my-seoa/pages/AccountPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,17 +91,24 @@ function AuthListener() {
 }
 
 function AppRoutes() {
-  const location = useLocation()
-  const hideFooter = location.pathname.startsWith('/admin')
-
   return (
-    <>
-      <GNB />
+    <AppShell>
       <ChatbotWidget />
       <DevFloatingButtons />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/ready" element={<ReadyPage />} />
+        <Route path="/brand" element={<BrandPage />} />
+        <Route path="/studio" element={<StudioPage />} />
+        <Route path="/care" element={<CarePage />} />
+        <Route path="/saas" element={<SaasPage />} />
+        <Route path="/work" element={<WorkPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/faq" element={<FaqPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/account-type" element={<AccountTypePage />} />
         <Route path="/auth/callback" element={<AuthCallbackPage />} />
         <Route path="/templates/:category" element={<TemplateGalleryPage />} />
         <Route path="/templates/detail/:id" element={<TemplateDetailPage />} />
@@ -149,6 +177,26 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/my"
+          element={
+            <ProtectedRoute>
+              <MySeoLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<DashboardPage />} />
+          <Route path="purchases" element={<PurchasesPage />} />
+          <Route path="purchases/:id" element={<PurchaseDetailPage />} />
+          <Route path="projects" element={<ProjectsPage />} />
+          <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="proposals" element={<ProposalsPage />} />
+          <Route path="proposals/:id" element={<ProposalDetailPage />} />
+          <Route path="billing" element={<BillingPage />} />
+          <Route path="support" element={<MySupportPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="account" element={<AccountPage />} />
+        </Route>
         <Route path="/support" element={<SupportPage />} />
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
@@ -163,9 +211,8 @@ function AppRoutes() {
         />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-      {!hideFooter && <Footer />}
       <Toast />
-    </>
+    </AppShell>
   )
 }
 

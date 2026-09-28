@@ -23,6 +23,21 @@ export function AuthCallbackPage() {
             if (target) sessionStorage.removeItem('seoah_returnTo')
           } catch (_) {}
         }
+        const provider = session.user.app_metadata?.provider
+        const isOAuth = provider === 'google' || provider === 'kakao'
+        const createdAt = new Date(session.user.created_at).getTime()
+        const isRecent = Number.isFinite(createdAt) && Date.now() - createdAt < 15 * 60 * 1000
+        if (isOAuth && isRecent) {
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('account_type')
+            .eq('id', session.user.id)
+            .maybeSingle()
+          if (!profileError && (profile == null || profile.account_type == null)) {
+            navigate('/account-type', { replace: true })
+            return
+          }
+        }
         navigate(target ?? '/', { replace: true })
       } else {
         setError('로그인에 실패했습니다.')

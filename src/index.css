@@ -3,15 +3,109 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: #1A4FA0;
-  --color-secondary: #E8EEFA;
+  --color-ink: #0c1222;
+  --color-ink-soft: #243044;
+  --color-ink-faint: #4a5568;
+  --color-canvas: #f5f6f8;
+  --color-paper: #ffffff;
+  --color-line: #e4e7ee;
+  --color-signal: #2f6bff;
+  --color-signal-hover: #1e56e0;
+  --color-signal-soft: #eaf0ff;
+  --color-primary: var(--color-signal);
+  --color-secondary: var(--color-signal-soft);
+  --shell-header: 4.5rem;
+  --shell-max: 1280px;
+  --shell-hero: 1360px;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-size: 16px;
+  line-height: 1.6;
+  font-family: "Pretendard Variable", Pretendard, Inter, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  word-break: keep-all;
 }
 
 #root {
   min-height: 100vh;
+}
+
+::selection {
+  background: var(--color-signal-soft);
+  color: var(--color-ink);
+}
+
+.text-display {
+  font-size: clamp(3.5rem, 4.5vw, 4.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.045em;
+  font-weight: 600;
+}
+
+.text-title {
+  font-size: clamp(2.25rem, 2.8vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+}
+
+.text-lead {
+  font-size: clamp(1rem, 1.05vw, 1.125rem);
+  line-height: 1.65;
+}
+
+.max-w-copy {
+  max-width: 40rem;
+}
+
+.text-ink-soft {
+  color: #243044;
+}
+
+.text-ink-faint {
+  color: #4a5568;
+}
+
+@keyframes seoah-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.float-soft {
+  animation: seoah-float 8s ease-in-out infinite;
+}
+
+.float-soft-delay {
+  animation: seoah-float 8s ease-in-out 1.2s infinite;
+}
+
+@keyframes seoah-fade {
+  from {
+    opacity: 0.72;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: seoah-fade 280ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .float-soft,
+  .float-soft-delay,
+  .fade-in {
+    animation: none;
+  }
 }
