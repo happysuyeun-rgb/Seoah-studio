@@ -104,6 +104,19 @@ REPLACE와 DO NOT APPLY는 없다. 순서를 건너뛰거나 파일 내용을 �
 
 이 기능은 Studio 테이블이 없어도 동작해야 한다. Studio 외래 키를 `projects`나 `orders`에 붙이면 안 된다.
 
+## 021–026 초안
+
+저장소에 다음 파일이 있다. 이 파일들이 있어도 원격 적용은 아직 금지다.
+
+- `021_users_account_foundation.sql`
+- `022_studio_sales_domain.sql`
+- `023_studio_delivery_domain.sql`
+- `024_studio_rls.sql`
+- `025_storage_bootstrap.sql`
+- `026_studio_service_functions.sql`
+
+`supabase db push`, `supabase migration up`, `supabase db reset`, SQL Editor 실행을 하지 않는다.
+
 ## 실행 금지
 
 다음 지시가 있기 전에는 어떤 환경에서도 하지 않는다.

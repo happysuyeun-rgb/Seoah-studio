@@ -9,7 +9,8 @@
 - Step 5–8 UI Skeleton. 저장은 없다.
 - 공식 Supabase 대상 기록: SEOAH.STUDIO, `qzvxypynlluqpdpmsstu`, ap-northeast-2.
 - Step 9 도메인 결정과 흐름 감사. Canonical 문서 5개.
-- Step 9.1 문서 수정. `studio_payments`, `proposal_internal_notes`, `contract_agreements`, `engagement_admin_state`. SQL은 없음.
+- Step 9.1 문서 수정. `studio_payments`, `proposal_internal_notes`, `contract_agreements`, `engagement_admin_state`.
+- Step 10 SQL 초안 `021`–`026`. 저장소에만 있고 원격에는 적용하지 않음.
 
 ## 공식 데이터베이스
 
@@ -17,12 +18,12 @@
 |------|------|
 | public schema | EMPTY |
 | link | 없음 |
-| migration | 없음 |
+| migration | 파일 `001`–`026`은 저장소에 있음. 원격 적용 없음 |
 | Edge Function | 없음 |
 | Storage | 없음 |
 | production env | 변경 없음 |
 
-`001`–`020`은 나중에 Legacy baseline으로 재사용할 수 있다. 020은 KEEP다. 지금은 적용하지 않는다.
+`001`–`020`은 나중에 Legacy baseline으로 재사용할 수 있다. `021`–`026`은 Studio 초안이다. 020은 KEEP다. 아무것도 적용하지 않는다.
 
 ## 다음
 

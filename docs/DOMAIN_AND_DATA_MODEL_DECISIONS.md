@@ -91,6 +91,7 @@ Storage 버킷 `project-uploads`, `project-outputs`, `thumbnails`는 SQL에 생�
 - engagement_reviews
 - intakes
 - intake_items
+- intake_item_admin_notes
 - engagement_files
 - engagement_messages
 - engagement_change_requests
@@ -188,7 +189,9 @@ id, user_id, lead_id, proposal_id, contract_id, name, project_type, status, prog
 
 상태: `NOT_STARTED`, `IN_PROGRESS`, `AWAITING_REVIEW`, `NEEDS_REVISION`, `COMPLETED`.
 
-`intake_items`: id, intake_id, category, title, description, required, status, customer_response, reference_url, admin_feedback, created_at, updated_at.
+`intake_items`: id, intake_id, category, title, description, required, status, customer_response, reference_url, created_at, updated_at. 관리자 피드백은 이 행에 두지 않는다.
+
+`intake_item_admin_notes`: intake_item_id, note, updated_at. 고객 SELECT는 없다. `021`–`026` SQL 초안이 이 분리를 포함한다. 파일은 원격에 적용하지 않는다.
 
 항목 상태: `NOT_STARTED`, `UPLOADED`, `UNDER_REVIEW`, `NEEDS_REVISION`, `APPROVED`, `OPTIONAL`.
 
@@ -295,6 +298,7 @@ RLS로 막을 대상이다. 화면 mapper만으로 충분하지 않다.
 - proposal_internal_notes 전체
 - contract_agreements 전체. 동의 여부와 시각만 안전한 조회로 제공
 - engagement_admin_state 전체
+- intake_item_admin_notes 전체
 - is_internal 메시지
 - audience admin 파일과 활동
 - audience admin 이거나 상태가 DRAFT, UNDER_REVIEW인 변경 요청
