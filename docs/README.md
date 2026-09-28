@@ -2,6 +2,8 @@
 
 > **2026-09-28 리뉴얼 문서화 기준:** [DOCUMENTATION_PLAN_2026-09-28.md](DOCUMENTATION_PLAN_2026-09-28.md)  
 > 현재는 기존 문서를 바로 삭제하지 않고, 위 계획에 따라 Canonical 문서로 순차 통합합니다.
+> **Cursor 작업 인계 / 잔여 작업:** [CURSOR_HANDOFF_REMAINING_WORK_2026-09-28.md](CURSOR_HANDOFF_REMAINING_WORK_2026-09-28.md)  
+> 현재 코드 기준 누락·보류·다음 구현 순서를 정리한 실행 문서입니다.
 
 개발 진행 시 **어떤 문서를 언제 보면 좋은지** 정리한 목차입니다.
 
