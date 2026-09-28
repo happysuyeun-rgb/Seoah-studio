@@ -146,11 +146,11 @@ id, user_id nullable, name, email, phone, company, account_type, project_type, c
 
 ## Engagement 생성
 
-조건은 Proposal `APPROVED`, Contract `AGREED`, 그 계약의 `studio_payments` 중 `type = DEPOSIT`이고 `status = PAID`인 행이다. Deposit은 Engagement보다 먼저 `contract_id`만으로 존재한다.
+조건은 Proposal `APPROVED`, Contract `AGREED`, 그 계약의 `studio_payments` 중 `type = DEPOSIT`이고 `status = PAID`인 행이다. Deposit은 Engagement보다 먼저 `contract_id`만으로 존재한다. 계약당 Deposit 행은 하나만 허용하고, 상태 변경으로 결제 생명주기를 기록한다.
 
 데이터베이스 CHECK 한 줄로는 세 조건을 막기 어렵다. 클라이언트 INSERT도 허용하지 않는다.
 
-최종 Integration에서는 서비스 롤 함수 `create_engagement_from_contract`가 한 트랜잭션에서 다음을 한다. 함수 SQL은 아직 만들지 않는다.
+`026_studio_service_functions.sql`의 서비스 롤 함수 `create_engagement_from_contract` 초안은 한 트랜잭션에서 다음을 한다. 파일은 저장소에만 있고 아직 적용하지 않았다.
 
 1. Proposal `APPROVED` 확인
 2. Contract `AGREED` 확인
@@ -162,6 +162,8 @@ id, user_id nullable, name, email, phone, company, account_type, project_type, c
 이렇게 만들어지는 Engagement의 정상 시작 상태는 `WAITING_CONTENT`다. Intake가 이미 있고 필수 항목이 모두 `APPROVED`이면, 이후 서비스 로직이 `READY_TO_START`로 바꿀 수 있다. 그 전이 때도 Contract와 Deposit을 다시 확인해도 된다.
 
 `DRAFT`, `AWAITING_CONTRACT`, `AWAITING_DEPOSIT`는 타입에서 지우지 않는다. 새 데이터베이스에서 이 함수로 만드는 Engagement의 정상 시작 상태로는 쓰지 않는다. 현재 UI 호환과 이후 흐름을 위한 상태다.
+
+Proposal–Lead, Contract–Proposal, Agreement–Contract Version, Engagement–Proposal–Contract, Milestone–Engagement 관계는 복합 FK로 같은 부모 체인인지 검증한다. 관리자나 서비스가 서로 다른 프로젝트의 ID를 섞은 행을 만들 수 없게 한다.
 
 ## Engagement
 
@@ -335,16 +337,17 @@ RLS로 막을 대상이다. 화면 mapper만으로 충분하지 않다.
 
 ## Migration 순서 초안
 
-파일을 만들지 않는다. `001`–`020`은 수정하지 않는다. 보완은 나중에 `021` 이후로만 한다.
+`001`–`020`은 수정하지 않는다. 보완은 `021` 이후의 새 파일로만 한다. 현재 초안은 저장소에만 있고 원격에는 적용하지 않았다.
 
 1. Legacy baseline. `001`–`020`을 빈 데이터베이스에 순서대로 재사용한다.
-2. Account 보완. `users.updated_at`처럼 빈칸만 additive로 추가한다.
-3. Studio 영업. leads, assessments, proposals, proposal_internal_notes, contracts, contract_agreements, studio_payments.
-4. Studio 제작. engagements, engagement_admin_state, 자식, intake. Deposit의 engagement_id 연결은 생성 함수가 한다.
-5. RLS.
-6. Storage 버킷과 정책. Commerce 버킷 3개와 `engagement-files`.
-7. Edge Functions.
-8. 관리자 계정과 필요한 시드.
-9. 런타임 연결과 기존 사이트 env 전환. 별도 지시 전 하지 않는다.
+2. `021`: Account 보완. `users.updated_at`을 additive로 추가한다.
+3. `022`: Studio 영업. leads, assessments, proposals, proposal_internal_notes, contracts, contract_agreements, studio_payments.
+4. `023`: Studio 제작. engagements, engagement_admin_state, 자식, intake. Deposit의 engagement_id FK를 추가한다.
+5. `024`: Studio RLS와 명시 권한.
+6. `025`: Commerce 버킷 3개와 `engagement-files` 버킷.
+7. `026`: `create_engagement_from_contract` 서비스 함수.
+8. `027`: 신규 Supabase 프로젝트용 Legacy Data API 명시 권한.
+9. Edge Functions, 관리자 계정과 필요한 시드.
+10. 런타임 연결과 기존 사이트 env 전환. 별도 지시 전 하지 않는다.
 
 `003`은 정책만 있고 Commerce 버킷 생성은 없다. 그래서 6번이 필요하다. `003` 파일은 고치지 않는다.

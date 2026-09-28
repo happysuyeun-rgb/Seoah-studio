@@ -11,7 +11,7 @@
 | Region | ap-northeast-2 |
 | public schema | EMPTY |
 | supabase link | 하지 않음 |
-| migration | 없음 |
+| migration | 저장소 `001`–`027`, 원격 적용 없음 |
 | Edge Function | 배포 없음 |
 | Storage | 없음 |
 | Vercel production env | 바꾸지 않음 |
@@ -33,7 +33,7 @@ public schema가 비어 있으므로, 이 대상에는 Legacy Commerce 테이블
 | Commerce 버킷 3개가 SQL에 없음 | 나중에 버킷 생성 migration. 003은 수정하지 않음 |
 | `inquiries.status`에 CHECK 없음. 코드는 `pending`, `replied`, Contact의 `new`를 함께 씀 | 020을 유지. 상태를 하나로 합치지 않음 |
 | OAuth 15분 `created_at` 추정 | 코드 제안만. 이번 Step에서 수정하지 않음 |
-| Studio 테이블 없음 | Group B는 021 이후. 결제 테이블 이름은 `studio_payments`. `engagement_payments`는 쓰지 않음. 아직 파일 없음 |
+| Studio 테이블 없음 | Group B는 `021`–`026` 초안에 있음. 결제 테이블 이름은 `studio_payments`. `engagement_payments`는 쓰지 않음. 원격 적용 없음 |
 
 ## 020
 
@@ -104,7 +104,7 @@ REPLACE와 DO NOT APPLY는 없다. 순서를 건너뛰거나 파일 내용을 �
 
 이 기능은 Studio 테이블이 없어도 동작해야 한다. Studio 외래 키를 `projects`나 `orders`에 붙이면 안 된다.
 
-## 021–026 초안
+## 021–027 초안
 
 저장소에 다음 파일이 있다. 이 파일들이 있어도 원격 적용은 아직 금지다.
 
@@ -114,6 +114,9 @@ REPLACE와 DO NOT APPLY는 없다. 순서를 건너뛰거나 파일 내용을 �
 - `024_studio_rls.sql`
 - `025_storage_bootstrap.sql`
 - `026_studio_service_functions.sql`
+- `027_legacy_data_api_grants.sql`
+
+`027`은 2026-05-30 이후 신규 Supabase 프로젝트에서 public 테이블이 Data API에 자동 노출되지 않는 기본값을 보완한다. Legacy 테이블의 `anon`, `authenticated`, `service_role` 권한을 명시하고, 실제 행 접근은 기존 RLS가 제한한다. 적용 전 Dashboard의 Data API 설정과 Security Advisor 결과를 다시 확인한다.
 
 `supabase db push`, `supabase migration up`, `supabase db reset`, SQL Editor 실행을 하지 않는다.
 
@@ -138,10 +141,11 @@ REPLACE와 DO NOT APPLY는 없다. 순서를 건너뛰거나 파일 내용을 �
 3. 현재 운영 env를 바꾸지 않은 상태에서 baseline을 검토한다.
 4. `001`–`020`을 순서대로 적용한다.
 5. Commerce 버킷 세 개를 만드는 추가 migration을 적용한다.
-6. Group B Studio migration을 적용한다.
-7. RLS를 적용한다.
-8. Edge Function을 배포한다.
-9. Legacy 구매 경로와 Studio 빈 화면을 확인한다.
-10. 그때만 production env 전환을 별도로 결정한다.
+6. Group B Studio migration `021`–`026`을 적용한다.
+7. Legacy Data API 명시 권한 `027`을 적용한다.
+8. 역할별 RLS와 Data API 접근을 검증한다.
+9. Edge Function을 배포한다.
+10. Legacy 구매 경로와 Studio 빈 화면을 확인한다.
+11. 그때만 production env 전환을 별도로 결정한다.
 
 4번부터는 이 문서의 초안이다. 승인 없이 실행하지 않는다.

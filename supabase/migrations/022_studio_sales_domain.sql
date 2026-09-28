@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS public.proposals (
   valid_until date,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT proposals_id_lead_id_key UNIQUE (id, lead_id),
   CONSTRAINT proposals_lead_id_fkey
     FOREIGN KEY (lead_id) REFERENCES public.leads (id) ON DELETE RESTRICT,
   CONSTRAINT proposals_user_id_fkey
@@ -111,6 +112,7 @@ CREATE TABLE IF NOT EXISTS public.proposal_versions (
   vat integer NOT NULL DEFAULT 0,
   total integer NOT NULL DEFAULT 0,
   created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT proposal_versions_id_proposal_id_key UNIQUE (id, proposal_id),
   CONSTRAINT proposal_versions_proposal_id_version_key UNIQUE (proposal_id, version),
   CONSTRAINT proposal_versions_proposal_id_fkey
     FOREIGN KEY (proposal_id) REFERENCES public.proposals (id) ON DELETE RESTRICT,
@@ -131,14 +133,22 @@ CREATE TABLE IF NOT EXISTS public.proposal_internal_notes (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT proposal_internal_notes_proposal_id_fkey
     FOREIGN KEY (proposal_id) REFERENCES public.proposals (id) ON DELETE RESTRICT,
-  CONSTRAINT proposal_internal_notes_version_id_fkey
-    FOREIGN KEY (proposal_version_id) REFERENCES public.proposal_versions (id) ON DELETE RESTRICT,
+  CONSTRAINT proposal_internal_notes_version_proposal_fkey
+    FOREIGN KEY (proposal_version_id, proposal_id)
+    REFERENCES public.proposal_versions (id, proposal_id) ON DELETE RESTRICT,
   CONSTRAINT proposal_internal_notes_created_by_fkey
     FOREIGN KEY (created_by) REFERENCES public.users (id) ON DELETE SET NULL
 );
 
 COMMENT ON TABLE public.proposal_internal_notes IS
   'Admin-only. Separate from proposal_versions so RLS can hide the whole row.';
+
+CREATE INDEX IF NOT EXISTS proposal_internal_notes_proposal_id_idx
+  ON public.proposal_internal_notes (proposal_id);
+CREATE INDEX IF NOT EXISTS proposal_internal_notes_version_id_idx
+  ON public.proposal_internal_notes (proposal_version_id);
+CREATE INDEX IF NOT EXISTS proposal_internal_notes_created_by_idx
+  ON public.proposal_internal_notes (created_by);
 
 DROP TRIGGER IF EXISTS proposal_internal_notes_set_updated_at ON public.proposal_internal_notes;
 CREATE TRIGGER proposal_internal_notes_set_updated_at
@@ -154,6 +164,7 @@ CREATE TABLE IF NOT EXISTS public.contracts (
   current_version integer NOT NULL DEFAULT 1,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT contracts_id_proposal_id_key UNIQUE (id, proposal_id),
   CONSTRAINT contracts_proposal_id_fkey
     FOREIGN KEY (proposal_id) REFERENCES public.proposals (id) ON DELETE RESTRICT,
   CONSTRAINT contracts_user_id_fkey
@@ -181,6 +192,7 @@ CREATE TABLE IF NOT EXISTS public.contract_versions (
   version integer NOT NULL,
   content jsonb NOT NULL DEFAULT '{}'::jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT contract_versions_id_contract_id_key UNIQUE (id, contract_id),
   CONSTRAINT contract_versions_contract_id_version_key UNIQUE (contract_id, version),
   CONSTRAINT contract_versions_contract_id_fkey
     FOREIGN KEY (contract_id) REFERENCES public.contracts (id) ON DELETE RESTRICT
@@ -197,14 +209,20 @@ CREATE TABLE IF NOT EXISTS public.contract_agreements (
   CONSTRAINT contract_agreements_contract_id_key UNIQUE (contract_id),
   CONSTRAINT contract_agreements_contract_id_fkey
     FOREIGN KEY (contract_id) REFERENCES public.contracts (id) ON DELETE RESTRICT,
-  CONSTRAINT contract_agreements_version_id_fkey
-    FOREIGN KEY (contract_version_id) REFERENCES public.contract_versions (id) ON DELETE RESTRICT,
+  CONSTRAINT contract_agreements_version_contract_fkey
+    FOREIGN KEY (contract_version_id, contract_id)
+    REFERENCES public.contract_versions (id, contract_id) ON DELETE RESTRICT,
   CONSTRAINT contract_agreements_agreed_by_fkey
     FOREIGN KEY (agreed_by) REFERENCES public.users (id) ON DELETE RESTRICT
 );
 
 COMMENT ON TABLE public.contract_agreements IS
   'One agreement row per contract. agreed_ip stays off the customer-visible contract row. Not an e-sign provider.';
+
+CREATE INDEX IF NOT EXISTS contract_agreements_contract_version_id_idx
+  ON public.contract_agreements (contract_version_id);
+CREATE INDEX IF NOT EXISTS contract_agreements_agreed_by_idx
+  ON public.contract_agreements (agreed_by);
 
 CREATE TABLE IF NOT EXISTS public.studio_payments (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -239,6 +257,9 @@ COMMENT ON TABLE public.studio_payments IS
 CREATE INDEX IF NOT EXISTS studio_payments_contract_id_idx ON public.studio_payments (contract_id);
 CREATE INDEX IF NOT EXISTS studio_payments_engagement_id_idx ON public.studio_payments (engagement_id);
 CREATE INDEX IF NOT EXISTS studio_payments_status_idx ON public.studio_payments (status);
+CREATE UNIQUE INDEX IF NOT EXISTS studio_payments_one_deposit_per_contract_idx
+  ON public.studio_payments (contract_id)
+  WHERE type = 'DEPOSIT';
 
 DROP TRIGGER IF EXISTS studio_payments_set_updated_at ON public.studio_payments;
 CREATE TRIGGER studio_payments_set_updated_at

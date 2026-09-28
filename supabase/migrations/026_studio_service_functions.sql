@@ -5,14 +5,14 @@
 -- EXECUTE is limited to service_role.
 -- The body also accepts an admin JWT so a later GRANT to authenticated
 -- would still reject customers. anon and authenticated cannot execute it now.
--- SECURITY DEFINER with search_path = public. The function bypasses RLS,
+-- SECURITY DEFINER with an empty search_path. The function bypasses RLS,
 -- which is required to insert the engagement and link the deposit.
 
 CREATE OR REPLACE FUNCTION public.create_engagement_from_contract(p_contract_id uuid)
 RETURNS public.engagements
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = ''
 AS $$
 DECLARE
   v_contract public.contracts%ROWTYPE;
@@ -23,7 +23,8 @@ DECLARE
   v_engagement public.engagements%ROWTYPE;
   v_deposit_count integer;
 BEGIN
-  IF COALESCE(auth.role(), '') IS DISTINCT FROM 'service_role' AND NOT public.is_admin() THEN
+  IF COALESCE(auth.jwt() ->> 'role', '') IS DISTINCT FROM 'service_role'
+     AND NOT public.is_admin() THEN
     RAISE EXCEPTION 'create_engagement_from_contract requires admin or service role';
   END IF;
 

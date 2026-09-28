@@ -28,12 +28,12 @@ CREATE TABLE IF NOT EXISTS public.engagements (
   CONSTRAINT engagements_contract_id_key UNIQUE (contract_id),
   CONSTRAINT engagements_user_id_fkey
     FOREIGN KEY (user_id) REFERENCES public.users (id) ON DELETE RESTRICT,
-  CONSTRAINT engagements_lead_id_fkey
-    FOREIGN KEY (lead_id) REFERENCES public.leads (id) ON DELETE RESTRICT,
-  CONSTRAINT engagements_proposal_id_fkey
-    FOREIGN KEY (proposal_id) REFERENCES public.proposals (id) ON DELETE RESTRICT,
-  CONSTRAINT engagements_contract_id_fkey
-    FOREIGN KEY (contract_id) REFERENCES public.contracts (id) ON DELETE RESTRICT,
+  CONSTRAINT engagements_proposal_lead_fkey
+    FOREIGN KEY (proposal_id, lead_id)
+    REFERENCES public.proposals (id, lead_id) ON DELETE RESTRICT,
+  CONSTRAINT engagements_contract_proposal_fkey
+    FOREIGN KEY (contract_id, proposal_id)
+    REFERENCES public.contracts (id, proposal_id) ON DELETE RESTRICT,
   CONSTRAINT engagements_status_check
     CHECK (status IN (
       'DRAFT',
@@ -75,9 +75,11 @@ COMMENT ON TABLE public.engagements IS
   'Studio project. Not a template customization session. DRAFT, AWAITING_CONTRACT, and AWAITING_DEPOSIT remain valid for UI compatibility but are not the normal status written by create_engagement_from_contract.';
 
 COMMENT ON COLUMN public.engagements.current_milestone_id IS
-  'FK is added after engagement_milestones. The database does not prove the milestone belongs to this engagement. The service must check engagement_id.';
+  'Composite FK is added after engagement_milestones and proves the milestone belongs to this engagement.';
 
 CREATE INDEX IF NOT EXISTS engagements_user_id_idx ON public.engagements (user_id);
+CREATE INDEX IF NOT EXISTS engagements_lead_id_idx ON public.engagements (lead_id);
+CREATE INDEX IF NOT EXISTS engagements_proposal_id_idx ON public.engagements (proposal_id);
 CREATE INDEX IF NOT EXISTS engagements_status_idx ON public.engagements (status);
 
 DROP TRIGGER IF EXISTS engagements_set_updated_at ON public.engagements;
@@ -116,6 +118,7 @@ CREATE TABLE IF NOT EXISTS public.engagement_milestones (
   requires_approval boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT engagement_milestones_id_engagement_id_key UNIQUE (id, engagement_id),
   CONSTRAINT engagement_milestones_engagement_id_fkey
     FOREIGN KEY (engagement_id) REFERENCES public.engagements (id) ON DELETE RESTRICT,
   CONSTRAINT engagement_milestones_status_check
@@ -142,9 +145,10 @@ CREATE TRIGGER engagement_milestones_set_updated_at
   EXECUTE FUNCTION public.set_updated_at();
 
 ALTER TABLE public.engagements
-  ADD CONSTRAINT engagements_current_milestone_id_fkey
-  FOREIGN KEY (current_milestone_id) REFERENCES public.engagement_milestones (id)
-  ON DELETE SET NULL;
+  ADD CONSTRAINT engagements_current_milestone_engagement_fkey
+  FOREIGN KEY (current_milestone_id, id)
+  REFERENCES public.engagement_milestones (id, engagement_id)
+  ON DELETE SET NULL (current_milestone_id);
 
 CREATE TABLE IF NOT EXISTS public.engagement_reviews (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -159,14 +163,17 @@ CREATE TABLE IF NOT EXISTS public.engagement_reviews (
   created_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT engagement_reviews_engagement_id_fkey
     FOREIGN KEY (engagement_id) REFERENCES public.engagements (id) ON DELETE RESTRICT,
-  CONSTRAINT engagement_reviews_milestone_id_fkey
-    FOREIGN KEY (milestone_id) REFERENCES public.engagement_milestones (id) ON DELETE RESTRICT,
+  CONSTRAINT engagement_reviews_milestone_engagement_fkey
+    FOREIGN KEY (milestone_id, engagement_id)
+    REFERENCES public.engagement_milestones (id, engagement_id) ON DELETE RESTRICT,
   CONSTRAINT engagement_reviews_status_check
     CHECK (status IN ('PENDING', 'APPROVED', 'REVISION_REQUESTED'))
 );
 
 CREATE INDEX IF NOT EXISTS engagement_reviews_engagement_id_idx
   ON public.engagement_reviews (engagement_id);
+CREATE INDEX IF NOT EXISTS engagement_reviews_milestone_id_idx
+  ON public.engagement_reviews (milestone_id);
 
 CREATE TABLE IF NOT EXISTS public.intakes (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -257,6 +264,8 @@ CREATE TABLE IF NOT EXISTS public.engagement_files (
 
 CREATE INDEX IF NOT EXISTS engagement_files_engagement_id_idx
   ON public.engagement_files (engagement_id);
+CREATE INDEX IF NOT EXISTS engagement_files_uploaded_by_idx
+  ON public.engagement_files (uploaded_by);
 
 CREATE TABLE IF NOT EXISTS public.engagement_messages (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -276,6 +285,8 @@ COMMENT ON COLUMN public.engagement_messages.is_internal IS
 
 CREATE INDEX IF NOT EXISTS engagement_messages_engagement_id_idx
   ON public.engagement_messages (engagement_id);
+CREATE INDEX IF NOT EXISTS engagement_messages_sender_user_id_idx
+  ON public.engagement_messages (sender_user_id);
 
 CREATE TABLE IF NOT EXISTS public.engagement_change_requests (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -348,6 +359,8 @@ CREATE TABLE IF NOT EXISTS public.engagement_activities (
 
 CREATE INDEX IF NOT EXISTS engagement_activities_engagement_id_idx
   ON public.engagement_activities (engagement_id);
+CREATE INDEX IF NOT EXISTS engagement_activities_actor_user_id_idx
+  ON public.engagement_activities (actor_user_id);
 
 ALTER TABLE public.studio_payments
   ADD CONSTRAINT studio_payments_engagement_id_fkey

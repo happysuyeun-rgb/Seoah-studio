@@ -1,6 +1,6 @@
 # Architecture and Boundaries
 
-기준: GitHub `main` `8e2feac` 이후 Step 9 설계. 코드의 domain type이 이 문서와 다르면 코드가 우선이고, 이 문서를 다시 맞춘다.
+기준: Step 10 초안 커밋 `eaaf90c` 이후 최신 `main`. 코드의 domain type이 이 문서와 다르면 코드가 우선이고, 이 문서를 다시 맞춘다.
 
 이 문서는 설계다. Migration, link, RLS 적용, Storage 생성, Edge deploy, Vercel env 변경을 지시하지 않는다.
 
