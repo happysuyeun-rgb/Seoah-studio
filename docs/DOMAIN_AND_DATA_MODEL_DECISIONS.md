@@ -148,7 +148,7 @@ id, user_id nullable, name, email, phone, company, account_type, project_type, c
 
 조건은 Proposal `APPROVED`, Contract `AGREED`, 그 계약의 `studio_payments` 중 `type = DEPOSIT`이고 `status = PAID`인 행이다. Deposit은 Engagement보다 먼저 `contract_id`만으로 존재한다. 계약당 Deposit 행은 하나만 허용하고, 상태 변경으로 결제 생명주기를 기록한다.
 
-데이터베이스 CHECK 한 줄로는 세 조건을 막기 어렵다. 클라이언트 INSERT도 허용하지 않는다.
+데이터베이스 CHECK 한 줄로는 세 조건을 막기 어렵다. 고객 클라이언트 INSERT는 허용하지 않는다. `024`에는 관리자 INSERT 정책 `engagements_admin_insert`가 남아 있다. 이 정책은 세 관문과 `create_engagement_from_contract`를 거치지 않는다. Step 10.2에서는 이 정책을 지우거나 유지하는 결정을 하지 않았다.
 
 `026_studio_service_functions.sql`의 서비스 롤 함수 `create_engagement_from_contract` 초안은 한 트랜잭션에서 다음을 한다. 파일은 저장소에만 있고 아직 적용하지 않았다.
 

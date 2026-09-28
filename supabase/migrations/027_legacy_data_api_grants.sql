@@ -1,7 +1,8 @@
 -- 027 legacy Data API grants
 -- New Supabase projects no longer expose public tables automatically.
--- This migration makes the legacy API surface explicit and keeps private
--- tables inaccessible unless an RLS policy and a table grant both allow it.
+-- Grants match existing RLS policies and current client calls.
+-- templates stays revoked for anon and authenticated. Use templates_public.
+-- service_role keeps ALL because Edge Functions bypass the browser.
 -- Draft SQL. Do not apply until a separate integration instruction.
 
 REVOKE ALL ON TABLE

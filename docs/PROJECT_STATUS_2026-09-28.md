@@ -1,6 +1,6 @@
 # SEOAH.STUDIO 프로젝트 상태 — 2026-09-28
 
-기준 코드: Step 10 초안 커밋 `eaaf90c` 이후 최신 `main`. Step 9는 설계만 기록했고, DB 적용은 하지 않았다.
+기준 코드: Step 10.2 검수. Step 9는 설계만 기록했고, DB 적용은 하지 않았다. 최종 갱신일: 2026-09-29.
 
 과거 이력은 `PROJECT_STATUS_2026-03-17.md`에 남아 있다. 그 파일은 지우지 않는다.
 
@@ -11,6 +11,7 @@
 - Step 9 도메인 결정과 흐름 감사. Canonical 문서 5개.
 - Step 9.1 문서 수정. `studio_payments`, `proposal_internal_notes`, `contract_agreements`, `engagement_admin_state`.
 - Step 10 SQL 초안 `021`–`026`과 적용 전 보안 보완 `027`. 저장소에만 있고 원격에는 적용하지 않음.
+- Step 10.2 정적 검수. `024`에서 정책이 없는 Studio 테이블 권한을 줄임. 격리 DB 실행은 하지 않음.
 
 ## 공식 데이터베이스
 

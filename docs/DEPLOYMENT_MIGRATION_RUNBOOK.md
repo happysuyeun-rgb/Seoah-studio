@@ -116,7 +116,16 @@ REPLACE와 DO NOT APPLY는 없다. 순서를 건너뛰거나 파일 내용을 �
 - `026_studio_service_functions.sql`
 - `027_legacy_data_api_grants.sql`
 
-`027`은 2026-05-30 이후 신규 Supabase 프로젝트에서 public 테이블이 Data API에 자동 노출되지 않는 기본값을 보완한다. Legacy 테이블의 `anon`, `authenticated`, `service_role` 권한을 명시하고, 실제 행 접근은 기존 RLS가 제한한다. 적용 전 Dashboard의 Data API 설정과 Security Advisor 결과를 다시 확인한다.
+`027`은 2026-05-30 이후 신규 Supabase 프로젝트에서 public 테이블이 Data API에 자동 노출되지 않는 기본값을 보완한다. 권한은 기존 RLS와 현재 클라이언트 호출에 맞춘다.
+
+- `anon`: `faqs` SELECT, `templates_public` SELECT
+- `authenticated`: `users` SELECT/UPDATE/DELETE, `projects` SELECT/INSERT/UPDATE, `orders` SELECT/UPDATE, `downloads` SELECT/INSERT, `faqs` SELECT/INSERT/UPDATE/DELETE, `inquiries` SELECT/INSERT/UPDATE/DELETE, `chatbot_inquiries` SELECT, `policy_agreements` SELECT/INSERT, `refund_requests` SELECT/INSERT, `templates_public` SELECT
+- `service_role`: 위 Legacy 테이블 ALL, `templates_public` SELECT
+- `templates` 직접 권한은 `anon`과 `authenticated`에 주지 않는다
+
+FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면에 호출이 없다. 002·004·006의 관리자 RLS가 그 권한을 전제로 하므로 초안에서는 유지한다. `024`는 정책이 없는 Studio 권한을 뺐다. `contract_agreements`는 SELECT, `studio_payments`는 SELECT/UPDATE, `engagement_activities`는 SELECT/INSERT만 `authenticated`에 준다.
+
+적용 전 Dashboard의 Data API 설정과 Security Advisor 결과를 다시 확인한다. 이 초안은 격리 실행으로 검증하지 않았다.
 
 `supabase db push`, `supabase migration up`, `supabase db reset`, SQL Editor 실행을 하지 않는다.
 

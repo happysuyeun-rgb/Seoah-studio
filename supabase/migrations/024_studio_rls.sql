@@ -420,8 +420,10 @@ CREATE POLICY engagement_activities_admin_insert ON public.engagement_activities
   FOR INSERT TO authenticated
   WITH CHECK ((SELECT public.is_admin()));
 
--- Authenticated clients may call the API. RLS still denies rows without a policy.
--- DELETE is not granted.
+-- Table grants follow the policies above. DELETE is not granted.
+-- contract_agreements: admin SELECT only. Inserts stay on service_role.
+-- studio_payments: no authenticated INSERT. Updates are admin-only by policy.
+-- engagement_activities: no authenticated UPDATE.
 
 REVOKE ALL ON TABLE
   public.leads,
@@ -454,8 +456,6 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
   public.proposal_internal_notes,
   public.contracts,
   public.contract_versions,
-  public.contract_agreements,
-  public.studio_payments,
   public.engagements,
   public.engagement_admin_state,
   public.engagement_milestones,
@@ -465,9 +465,12 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
   public.intake_item_admin_notes,
   public.engagement_files,
   public.engagement_messages,
-  public.engagement_change_requests,
-  public.engagement_activities
+  public.engagement_change_requests
 TO authenticated;
+
+GRANT SELECT ON TABLE public.contract_agreements TO authenticated;
+GRANT SELECT, UPDATE ON TABLE public.studio_payments TO authenticated;
+GRANT SELECT, INSERT ON TABLE public.engagement_activities TO authenticated;
 
 GRANT ALL ON TABLE
   public.leads,
