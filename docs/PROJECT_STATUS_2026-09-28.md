@@ -1,0 +1,44 @@
+# SEOAH.STUDIO 프로젝트 상태 — 2026-09-28
+
+기준 코드: GitHub `main` `25f5671`. Step 9는 설계만 기록했다.
+
+과거 이력은 `PROJECT_STATUS_2026-03-17.md`에 남아 있다. 그 파일은 지우지 않는다.
+
+## 완료
+
+- Step 5–8 UI Skeleton. 저장은 없다.
+- 공식 Supabase 대상 기록: SEOAH.STUDIO, `qzvxypynlluqpdpmsstu`, ap-northeast-2.
+- Step 9 도메인 결정과 흐름 감사. Canonical 문서 5개.
+
+## 공식 데이터베이스
+
+| 항목 | 상태 |
+|------|------|
+| public schema | EMPTY |
+| link | 없음 |
+| migration | 없음 |
+| Edge Function | 없음 |
+| Storage | 없음 |
+| production env | 변경 없음 |
+
+`001`–`020`은 나중에 Legacy baseline으로 재사용할 수 있다. 020은 KEEP다. 지금은 적용하지 않는다.
+
+## 다음
+
+별도 Integration 지시 전에 migration, link, RLS, Storage, Edge deploy, env 변경을 하지 않는다.
+
+UI로 남은 것:
+
+- Proposal Draft → Preview → Send
+- Proposal Approved → Contract 준비 연결
+- Project Request sessionStorage stale cleanup
+- Modal full focus trap
+- Project Request 필수 입력 기준
+
+## 기준 문서
+
+- `ARCHITECTURE_AND_BOUNDARIES.md`
+- `PRODUCT_IA_AND_FLOWS.md`
+- `DOMAIN_AND_DATA_MODEL_DECISIONS.md`
+- `BUSINESS_RULES_AND_SERVICE_POLICY.md`
+- `DEPLOYMENT_MIGRATION_RUNBOOK.md`

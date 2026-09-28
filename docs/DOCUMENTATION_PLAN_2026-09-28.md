@@ -44,9 +44,9 @@
   - Step 7 Engagement / Intake
   - Step 8 Admin Operations
 - 다음 단계
-  - Step 9 Final Domain / Data Model Freeze + End-to-End Workflow Audit
-  - Step 9에서는 Migration을 적용하지 않음
-  - 그 다음 Final DB Design / Migration / Integration
+  - Step 9 설계는 Canonical 문서에 기록됨
+  - Migration은 기록만 됐고 적용하지 않음
+  - 적용은 별도 Integration 지시 이후
 - 실제 미적용 항목
   - Migration 020
   - submit-contact deploy
@@ -403,7 +403,7 @@ P0 문서가 정리된 뒤 필요할 때만 만든다.
 2. `ARCHITECTURE_AND_BOUNDARIES.md`
 3. `PRODUCT_IA_AND_FLOWS.md`
 
-Step 5~8 UI Skeleton은 `25f5671`에서 완료됐다. 이 세 문서는 Step 9의 도메인 확정과 흐름 감사에서 기준이 된다. Migration은 그 단계에서도 적용하지 않는다.
+Step 5~8 UI Skeleton은 `25f5671`에서 완료됐다. Step 9 설계 문서는 작성됐다. Migration은 적용하지 않는다.
 
 ### 2차 — DB 설계 전에
 4. `DOMAIN_AND_DATA_MODEL_DECISIONS.md`

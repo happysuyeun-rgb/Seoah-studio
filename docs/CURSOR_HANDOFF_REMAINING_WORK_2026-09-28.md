@@ -834,11 +834,15 @@ UI/업무 흐름 확정 뒤에만. Step 9에서는 여기까지 내려가지 않
 
 Step 5 / 6 / 7 / 8 UI Skeleton은 `25f5671` 기준으로 완료됐다.
 
-현재 다음 단계:
+Step 9 설계는 문서에 기록됐다. 적용은 하지 않았다.
 
-> **Step 9 — Final Domain / Data Model Freeze + End-to-End Workflow Audit**
+- `docs/ARCHITECTURE_AND_BOUNDARIES.md`
+- `docs/PRODUCT_IA_AND_FLOWS.md`
+- `docs/DOMAIN_AND_DATA_MODEL_DECISIONS.md`
+- `docs/BUSINESS_RULES_AND_SERVICE_POLICY.md`
+- `docs/DEPLOYMENT_MIGRATION_RUNBOOK.md`
 
-Step 9에서도 DB Migration은 적용하지 않는다. `supabase link`, `db push`, CREATE TABLE, RLS, Edge Function deploy, Storage, Vercel production env 변경은 하지 않는다.
+다음은 별도 Integration 지시다. 그 전에 `supabase link`, `db push`, CREATE TABLE, RLS, Edge Function deploy, Storage, Vercel production env 변경은 하지 않는다.
 
 아래는 아직 해결되지 않았다.
 
