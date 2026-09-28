@@ -2,8 +2,8 @@
 
 **Date:** 2026-09-28  
 **Repository:** `happysuyeun-rgb/Seoah-studio`  
-**Audit basis:** GitHub `main` as of commit `8304473`  
-**Latest feature commit:** `94b0425`  
+**Audit basis:** GitHub `main` as of commit `903cc99`  
+**Latest feature commit:** `903cc99`  
 **Purpose:** 현재 코드 기준으로 완료/누락/의도적 보류 항목을 구분하고, Cursor가 다음 작업을 안전하게 이어갈 수 있도록 실행 순서를 고정한다.
 
 > 이 문서는 “무엇이 아직 안 됐는가”를 기록하는 작업 인계서다.  
@@ -58,7 +58,7 @@
 
 - Step 5–7 화면의 실제 저장 (Lead, Proposal, Contract, Engagement, Intake)
 - Milestone / Review / Files / Messages / Change Request persistence
-- New Admin Operations
+- New Admin Operations의 실제 저장, 권한 분리, Commerce 데이터 통합
 - MY SEOA 실제 DB 데이터 연결
 - 최종 New Platform 데이터 모델 / Migration
 - Supabase 실제 연결 및 런타임 검증
@@ -171,7 +171,7 @@ supabase.functions.invoke('submit-contact')
 
 그러나:
 
-- SEOAH Supabase project ref 미확인
+- 공식 Supabase 대상은 `qzvxypynlluqpdpmsstu`(SEOAH.STUDIO, ap-northeast-2, public schema 비어 있음)로 기록만 됨. 아직 link·Migration·배포·환경 변수 교체 없음
 - Migration 020 미적용
 - submit-contact 미배포
 - Guest insert 실제 검증 없음
@@ -184,7 +184,7 @@ Production에서 Contact를 실제 접수 기능으로 간주하면 안 된다.
 
 ### 향후 완료 조건
 
-- 정확한 Supabase project 확인
+- 공식 대상 `qzvxypynlluqpdpmsstu`는 기록됨. 적용은 별도 Integration 지시 후
 - Migration 검토/적용
 - submit-contact deploy
 - guest submit
@@ -428,7 +428,8 @@ Legacy `/mypage/settings`의 기능을 삭제하지 않는다.
 - 고객 `/my/projects`, `/my/projects/:id`에 Engagement mapper 연결. 메뉴명은 Projects
 - Intake는 Engagement Detail 탭. 별도 route 없음
 - 고객 단계: 준비, 기획, 디자인, 제작, 검토, 완료
-- Admin status는 mapper로만 고객 단계가 된다
+- `progressStage`는 관리자 status와 별도다. PAUSED/CANCELLED여도 진행 단계는 유지된다
+- 고객 화면은 `CustomerEngagementView`만 읽는다. internalNotes, 내부 메시지, admin audience 파일·활동, DRAFT/UNDER_REVIEW 변경 요청은 뷰에 없다
 - Milestone, Review, Files, Messages, Change Request, Activity, Payments는 화면과 타입만
 - 운영 빌드는 빈 목록. DEV fixture만 예시 데이터
 - Legacy `public.projects`는 사용하지 않음. `engagements` 테이블은 만들지 않음
@@ -447,24 +448,36 @@ Legacy `/mypage/settings`의 기능을 삭제하지 않는다.
 
 ---
 
-# 6. Step 8 — New Admin Operations 미구현
+# 6. Step 8 — New Admin Operations
 
-현재 `AdminPage.tsx`는 약 40KB의 Legacy Admin page이며
-기존 Commerce 관리 기능이 중심이다.
+## DONE (UI / domain skeleton)
 
-### 원칙
+- Admin shell: 데스크톱 sidebar, 모바일 header + drawer
+- `/admin`은 기존 `AdminPage` 유지. Dashboard는 `/admin/dashboard`
+- 신규 route: customers, customers/:id, products, orders, payments, intake, care, saas, support, chatbot, content, analytics, settings
+- 기존 route 유지: leads, proposals, contracts, engagements
+- Orders와 Chatbot은 Legacy Admin으로 이동하는 안내 화면
+- Intake 대기열은 `/admin/engagements/:id?tab=intake`로 연결
+- Production 기본값은 빈 목록. 매출·고객 수 가짜 지표 없음
+- 권한은 기존 `users.is_admin`. RBAC 없음
 
-기존 AdminPage를 한 번에 rewrite하지 않는다.
+## REMAINING
 
-신규 기능은 별도 route로 추가:
+- Customers, Products, Payments, Support, Care, SaaS의 저장과 실제 조회
+- Legacy templates / orders / inquiries를 새 화면으로 합치지 않음
+- Commerce 결제와 Studio 결제를 한 원장으로 합치지 않음
+- Support 상태와 Legacy `pending` / `replied` 매퍼
+- Care 운영 정책(요청 정의, 월 한도, 이월, 응답 시간, 긴급, 외부 비용) 확정 전 DB 필드 금지
+- Organization / Workspace 테이블 금지
+- 전역 검색, 세분 권한(Owner, Staff, Finance, Support)은 이후
+- Step 6에서 넘어온 누락은 Step 7 REMAINING과 동일하게 유지:
+  - Proposal Draft → Preview → Send
+  - Proposal Approved → Contract 준비 연결
+  - Project Request sessionStorage stale cleanup
+  - Modal full focus trap
+  - Project Request 필수 입력 기준
 
-- `/admin/leads`
-- `/admin/proposals`
-- `/admin/contracts`
-- `/admin/engagements`
-- 이후 Products / Care / SaaS 등
-
-공통 Admin shell이 필요해지는 시점에 점진적으로 분리한다.
+Migration, Edge deploy, Supabase link, DB push는 Final Integration 전까지 실행하지 않는다.
 
 ---
 
@@ -472,26 +485,31 @@ Legacy `/mypage/settings`의 기능을 삭제하지 않는다.
 
 아래는 UI Skeleton 완료 전에는 실행하지 않는다.
 
-## 7.1 Supabase 원본 프로젝트 식별
+## 7.1 공식 Supabase 대상 — 기록만
 
-현재 저장소에는 실제 project ref가 없고
-현재 확인한 Supabase 계정에서도 SEOAH 프로젝트가 식별되지 않았다.
+2026-09-28에 새 프로젝트가 확인되었다. 연결하거나 스키마를 만들지 않는다.
 
-먼저:
+| 항목 | 값 |
+|------|------|
+| 이름 | SEOAH.STUDIO |
+| Project Ref | `qzvxypynlluqpdpmsstu` |
+| Region | ap-northeast-2 |
+| 상태 | ACTIVE_HEALTHY |
+| public schema | EMPTY |
 
-1. Vercel env 또는 기존 배포 환경에서 `VITE_SUPABASE_URL` 확인
-2. project ref 확인
-3. 해당 DB가 기존 SEOAH 데이터인지 read-only 확인
+이 프로젝트가 앞으로 SEOAH.STUDIO의 공식 Supabase 대상이다. Final Data Model이 정해지고 별도의 Integration 지시가 있기 전까지는 대상 정보로만 둔다.
 
-검증 대상:
+하지 않은 일:
 
-- users
-- templates
-- projects
-- orders
-- downloads
-- inquiries
-- refund_requests
+- `supabase link`
+- `supabase db push`, migration apply
+- CREATE TABLE, RLS
+- Edge Function deploy
+- Storage bucket
+- Vercel Production env 교체
+- 기존 사이트의 Supabase env 변경
+
+public schema가 비어 있다. 기존 Commerce 데이터는 이 프로젝트에 없다. 현재 배포의 env를 이 ref로 바꾸면 운영 중인 사이트가 끊긴다.
 
 ## 7.2 Final Data Model
 

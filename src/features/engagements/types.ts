@@ -104,6 +104,13 @@ export const changeRequestStatuses = [
 ] as const
 export type ChangeRequestStatus = (typeof changeRequestStatuses)[number]
 
+/** 고객에게 상태를 보여줄 변경 요청. DRAFT와 UNDER_REVIEW는 운영 내부 상태다. */
+export const customerChangeRequestStatuses = ['AWAITING_CUSTOMER_APPROVAL', 'APPROVED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED'] as const
+export type CustomerChangeRequestStatus = (typeof customerChangeRequestStatuses)[number]
+
+export const audiences = ['customer', 'admin'] as const
+export type Audience = (typeof audiences)[number]
+
 export interface EngagementChangeRequest {
   id: string
   engagementId: string
@@ -115,6 +122,8 @@ export interface EngagementChangeRequest {
   scheduleImpact: string
   createdAt: string
   approvedAt: string | null
+  /** admin이면 고객 변경 요청 목록에 넣지 않는다. */
+  audience: Audience
 }
 
 export const fileCategories = ['Intake', 'Planning', 'Design', 'Development', 'Review', 'Final', 'Contract', 'Other'] as const
@@ -127,6 +136,8 @@ export interface EngagementFile {
   uploadedBy: 'Admin' | 'Customer'
   createdAt: string
   version: number
+  /** admin이면 고객 파일 목록에 넣지 않는다. */
+  audience: Audience
 }
 
 export interface EngagementMessage {
@@ -155,6 +166,8 @@ export interface EngagementActivity {
   actor: string
   description: string
   createdAt: string
+  /** admin이면 고객 활동 목록에 넣지 않는다. */
+  audience: Audience
 }
 
 /** 결제 상태. EngagementStatus와 섞지 않는다. Legacy orders와 연결하지 않는다. */
@@ -175,6 +188,8 @@ export interface Engagement {
   customer: string
   projectType: string
   status: EngagementStatus
+  /** 고객 진행 단계. PAUSED/CANCELLED와 별도이며, 중지해도 이 값은 유지한다. */
+  progressStage: ProjectStage
   progress: number
   startedAt: string | null
   expectedCompletion: string | null
@@ -196,8 +211,90 @@ export interface Engagement {
   payments: EngagementPayment[]
 }
 
-export interface EngagementView extends Engagement {
-  customerStage: ProjectStage
+export type CustomerHold = 'paused' | 'cancelled'
+
+export interface CustomerMilestone {
+  id: string
+  title: string
+  description: string
+  status: MilestoneStatus
+  order: number
+  dueDate: string | null
+  requiresApproval: boolean
+  needsAction: boolean
+}
+
+export interface CustomerReview {
+  id: string
+  title: string
+  status: ReviewStatus
+  feedback: string
+  version: number
+}
+
+export interface CustomerFile {
+  id: string
+  name: string
+  category: FileCategory
+  createdAt: string
+  version: number
+}
+
+export interface CustomerMessage {
+  id: string
+  sender: 'Admin' | 'Customer'
+  body: string
+  createdAt: string
+}
+
+export interface CustomerChangeRequest {
+  id: string
+  title: string
+  description: string
+  classification: ChangeClassification
+  status: CustomerChangeRequestStatus
+  costImpact: string
+  scheduleImpact: string
+  createdAt: string
+}
+
+export interface CustomerActivity {
+  id: string
+  description: string
+  createdAt: string
+  actor: string
+}
+
+export interface CustomerPayment {
+  id: string
+  label: EngagementPayment['label']
+  amount: number
+  dueDate: string | null
+  status: EngagementPaymentStatus
+}
+
+/** 고객 화면이 읽는 값만 담는다. internalNotes, 내부 메시지, 관리자 파일·활동·내부 변경 상태는 없다. */
+export interface CustomerEngagementView {
+  id: string
+  name: string
+  projectType: string
+  progressStage: ProjectStage
+  hold: CustomerHold | null
+  progress: number
+  expectedCompletion: string | null
+  actionRequired: ActionRequired | null
+  milestones: CustomerMilestone[]
+  reviews: CustomerReview[]
+  files: CustomerFile[]
+  payments: CustomerPayment[]
+  messages: CustomerMessage[]
+  changeRequests: CustomerChangeRequest[]
+  activities: CustomerActivity[]
+}
+
+export const customerHoldLabels: Record<CustomerHold, string> = {
+  paused: '일시중지',
+  cancelled: '취소',
 }
 
 export const adminListFilters = ['Preparing', 'In Progress', 'Awaiting Review', 'Blocked', 'Completed', 'Paused', 'Cancelled'] as const

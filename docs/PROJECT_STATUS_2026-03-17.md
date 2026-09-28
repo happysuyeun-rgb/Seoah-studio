@@ -1,6 +1,6 @@
 # SEOAH.STUDIO 프로젝트 상태 보고서
 
-> **최종 갱신일:** 2026-09-28 (리뉴얼 Step 7: Engagement / Intake UI)  
+> **최종 갱신일:** 2026-09-28 (Admin Operations UI skeleton, Supabase 대상 기록)  
 > **기준 문서:** full_spec_v2_2_final.html (기능정의서 + 화면설계서 v2.2), SEOAH_STUDIO_Master_Planning_v4.html
 
 ---
@@ -117,6 +117,21 @@
 | UI | Intake, Milestone, Review, Files, Messages, Change Request | ✅ 화면만 | 업로드·저장·결제 없음 |
 | 원칙 | `public.projects` | 유지 | Studio 프로젝트로 재사용하지 않음. engagements 테이블 없음 |
 
+### 1.8 공개 사이트 — 맨 위로 (2026-09-28)
+
+| 구분 | 항목 | 상태 | 비고 |
+|------|------|------|------|
+| UI | 맨 위로 버튼 | ✅ | 공개 페이지. 스크롤 후에만 표시. MY SEOA·Admin에는 없음 |
+
+### 1.9 리뉴얼 Step 8 — Admin Operations UI (2026-09-28)
+
+| 구분 | 항목 | 상태 | 비고 |
+|------|------|------|------|
+| UI | `/admin/dashboard` | ✅ 화면만 | `/admin`은 기존 Commerce 관리 화면 |
+| UI | Customers, Products, Payments, Intake, Care, Support | ✅ 화면만 | 저장 없음. Production은 빈 목록 |
+| UI | SaaS, Content, Analytics, Settings | ✅ 화면만 | 차트·비밀 키 입력 없음 |
+| 연결 | Orders, Chatbot | 안내 | Legacy Admin으로 이동. 재구현하지 않음 |
+
 ---
 
 ## 2. 구현 예정 (미완료)
@@ -131,6 +146,7 @@
 | R4 | Studio Lead UI, `/admin/leads` | 화면은 Step 5. 저장은 아직 없음 |
 | R4b | Proposal / Contract UI | 화면은 Step 6. 저장·서명·결제·Engagement는 없음 |
 | R5 | engagements 스키마 | 화면은 Step 7. 테이블은 Final Integration 전 만들지 않음. 기존 `projects` 재사용 금지 |
+| R6 | Admin Operations UI | 화면은 Step 8. `/admin` Legacy 유지. 저장·권한 분리·데이터 통합은 이후 |
 
 ### 2.1 Phase F (P1)
 
@@ -219,14 +235,30 @@
 | Studio 의뢰 / Admin Leads 화면 | ✅ | 저장 ⬜ |
 | Proposal / Contract 화면 | ✅ | 저장·결제 ⬜ |
 | Engagement / Intake 화면 | ✅ | 저장·업로드 ⬜ |
+| 공개 사이트 맨 위로 버튼 | ✅ | |
+| Admin Operations 화면 | ✅ | 저장·통합 ⬜ |
 
 ---
 
 ## 5. 사용자 직접 작업 항목 & 방법
 
+공식 Supabase 대상은 기록만 되어 있습니다. Final Data Model과 별도 Integration 지시 전까지 아래는 실행하지 않습니다.
+
+- 프로젝트: SEOAH.STUDIO
+- Ref: `qzvxypynlluqpdpmsstu`
+- Region: ap-northeast-2
+- 상태: ACTIVE_HEALTHY
+- public schema: 비어 있음
+- Migration
+- Edge Function deploy
+- Supabase link
+- DB push
+- Vercel Production env 교체
+- 기존 사이트 Supabase env 변경
+
 ### 5.1 Supabase Migration — Final Integration 단계까지 보류
 
-지금 실행할 작업이 아닙니다. SEOAH Supabase 프로젝트가 확인되고, UI 흐름 뒤의 최종 데이터 모델이 정해진 Final Integration 단계에서만 검토합니다.
+지금 실행할 작업이 아닙니다. 대상 ref는 `qzvxypynlluqpdpmsstu`로 확인됐지만 public schema는 비어 있습니다. 최종 데이터 모델과 별도 Integration 지시 전까지 적용하지 않습니다.
 
 `supabase db push`를 실행하지 않습니다. SQL Editor에서 마이그레이션을 적용하지 않습니다. 다른 Supabase 프로젝트에도 적용하지 않습니다.
 
@@ -240,22 +272,21 @@
 
 ---
 
-### 5.2 필수 — Edge Function 배포
+### 5.2 Edge Function 배포 — Final Integration 단계까지 보류
 
-```bash
-cd c:\Dev\seoah
-supabase functions deploy ai-customize
-supabase functions deploy verify-payment
-supabase functions deploy get-download-url
-supabase functions deploy send-email
-supabase functions deploy submit-chatbot-inquiry
-supabase functions deploy submit-refund-request
-supabase functions deploy process-refund
-supabase functions deploy delete-account
-supabase functions deploy submit-contact --no-verify-jwt
-```
+지금 실행할 작업이 아닙니다. 대상 ref는 확인됐지만 함수를 배포하지 않고, `supabase link`도 하지 않습니다. 기존 사이트의 env도 바꾸지 않습니다.
 
-`submit-contact`는 챗봇 함수와 같이 JWT 검증을 끄고 배포합니다. 함수 안에서 로그인 토큰만 따로 확인합니다.
+나중에 대상이 확정되면 배포 대상이 되는 함수:
+
+- `ai-customize`
+- `verify-payment`
+- `get-download-url`
+- `send-email`
+- `submit-chatbot-inquiry`
+- `submit-refund-request`
+- `process-refund`
+- `delete-account`
+- `submit-contact` (챗봇 함수와 같이 JWT 검증을 끄고, 함수 안에서 로그인 토큰만 따로 확인)
 
 ---
 

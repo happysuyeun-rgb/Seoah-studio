@@ -8,7 +8,8 @@ import { formatKrw } from '../../proposals/money'
 import { intakeProgress, SECRET_INTAKE_NOTE } from '../../intake/types'
 import { ActionRequiredPanel } from '../components/ActionRequiredPanel'
 import { ScrollTabs } from '../components/ScrollTabs'
-import { customerMessages, customerStageFor, nextCustomerStage, statusTone, toEngagementView } from '../mappers'
+import { nextCustomerStage, statusTone, toCustomerEngagementView } from '../mappers'
+import { customerHoldLabels } from '../types'
 import { BUG_CHANGE_NOTE, REVISION_BUNDLE_NOTE, STAGE_LOCK_NOTE, type Engagement } from '../types'
 import { useEditable } from '../useEditable'
 import { useEngagementSource } from '../useEngagementSource'
@@ -45,9 +46,9 @@ export function CustomerProjectDetail() {
   const [draft, setDraft] = useEditable(id, ready ? (engagements.find((item) => item.id === id) ?? null) : null)
   const [intake, setIntake] = useEditable(id, ready ? (intakes.find((item) => item.engagementId === id) ?? null) : null)
 
-  const view = draft ? toEngagementView(draft) : null
+  const view = draft ? toCustomerEngagementView(draft) : null
   const counts = intakeProgress(intake)
-  const next = view ? nextCustomerStage(view.customerStage) : null
+  const next = view ? nextCustomerStage(view.progressStage) : null
 
   const patchReview = (reviewId: string, status: Engagement['reviews'][number]['status']) => {
     setDraft((current) =>
@@ -93,7 +94,8 @@ export function CustomerProjectDetail() {
           {import.meta.env.DEV ? <p className="mb-4 text-xs text-ink-faint">개발 환경 예시입니다. 승인, 메시지, 파일은 저장되지 않습니다.</p> : null}
           <h1 className="text-3xl font-semibold tracking-tight text-ink">{view.name}</h1>
           <p className="mt-3 text-sm text-ink-soft">
-            {view.customerStage} · {view.progress}% · {view.expectedCompletion ?? '일정 미정'}
+            {view.progressStage}
+            {view.hold ? ` · ${customerHoldLabels[view.hold]}` : ''} · {view.progress}% · {view.expectedCompletion ?? '일정 미정'}
           </p>
           {notice ? <p className="mt-3 text-sm text-ink">{notice}</p> : null}
           <div className="mt-8">
@@ -105,7 +107,10 @@ export function CustomerProjectDetail() {
                 <dl className="grid gap-4 text-sm sm:grid-cols-2">
                   <div>
                     <dt className="text-ink-faint">지금 단계</dt>
-                    <dd className="mt-1 text-ink">{view.customerStage}</dd>
+                    <dd className="mt-1 text-ink">
+                      {view.progressStage}
+                      {view.hold ? ` · ${customerHoldLabels[view.hold]}` : ''}
+                    </dd>
                   </div>
                   <div>
                     <dt className="text-ink-faint">다음 단계</dt>
@@ -173,7 +178,7 @@ export function CustomerProjectDetail() {
                 </section>
               </div>
             ) : null}
-            {tab === 'progress' ? <ProgressTimeline current={customerStageFor(view.status)} /> : null}
+            {tab === 'progress' ? <ProgressTimeline current={view.progressStage} /> : null}
             {tab === 'milestones' ? (
               <ul className="divide-y divide-line border-t border-line">
                 {view.milestones.map((item) => (
@@ -181,7 +186,7 @@ export function CustomerProjectDetail() {
                     <div className="flex flex-wrap items-center gap-2">
                       <h2 className="text-sm font-medium text-ink">{item.title}</h2>
                       <StatusBadge tone={statusTone(item.status)}>{item.status}</StatusBadge>
-                      {item.requiresApproval && item.status === 'AWAITING_REVIEW' ? <span className="text-xs text-ink-faint">Need Action</span> : null}
+                      {item.needsAction ? <span className="text-xs text-ink-faint">Need Action</span> : null}
                     </div>
                     <p className="mt-2 text-sm text-ink-soft">{item.description}</p>
                     <p className="mt-1 text-xs text-ink-faint">Expected {item.dueDate ?? '—'}</p>
@@ -257,11 +262,11 @@ export function CustomerProjectDetail() {
               </section>
             ) : null}
             {tab === 'messages' ? (
-              customerMessages(view).length === 0 ? (
+              view.messages.length === 0 ? (
                 <p className="text-sm text-ink-soft">메시지가 없습니다.</p>
               ) : (
                 <ul className="divide-y divide-line border-t border-line">
-                  {customerMessages(view).map((message) => (
+                  {view.messages.map((message) => (
                     <li key={message.id} className="py-4 text-sm">
                       <p className="text-xs text-ink-faint">
                         {message.sender} · {message.createdAt}

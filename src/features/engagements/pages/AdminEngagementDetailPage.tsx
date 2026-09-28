@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { usePageTitle } from '../../../components/marketing/usePageTitle'
 import { StatusBadge } from '../../my-seoa/components/StatusBadge'
 import { formatKrw } from '../../proposals/money'
 import { intakeProgress, SECRET_INTAKE_NOTE, type Intake, type IntakeItemStatus } from '../../intake/types'
 import { ScrollTabs } from '../components/ScrollTabs'
-import { customerStageFor, meetsReadyToStart, statusTone } from '../mappers'
+import { customerStageFor, meetsReadyToStart, resolveCustomerStage, statusTone } from '../mappers'
 import {
   BUG_CHANGE_NOTE,
   CUSTOMER_DELAY_POLICY,
@@ -35,13 +35,19 @@ const tabs = [
 
 type TabId = (typeof tabs)[number]['id']
 
+function isTab(value: string | null): value is TabId {
+  return tabs.some((tab) => tab.id === value)
+}
+
 const UNSAVED = '저장되지 않았습니다. 이 브라우저에서만 바뀝니다.'
 
 export function AdminEngagementDetailPage() {
   usePageTitle('Project — SEOAH.STUDIO')
   const { id } = useParams()
+  const [params] = useSearchParams()
+  const requested = params.get('tab')
   const { engagements, intakes, ready } = useEngagementSource()
-  const [tab, setTab] = useState<TabId>('overview')
+  const [tab, setTab] = useState<TabId>(isTab(requested) ? requested : 'overview')
   const [notice, setNotice] = useState('')
   const [draft, setDraft] = useEditable(id, ready ? (engagements.find((item) => item.id === id) ?? null) : null)
   const [intake, setIntake] = useEditable(id, ready ? (intakes.find((item) => item.engagementId === id) ?? null) : null)
@@ -49,7 +55,12 @@ export function AdminEngagementDetailPage() {
   const milestoneTitle = (milestoneId: string) => draft?.milestones.find((item) => item.id === milestoneId)?.title ?? milestoneId
 
   const setStatus = (status: EngagementStatus) => {
-    setDraft((current) => (current ? { ...current, status, updatedAt: current.updatedAt } : current))
+    setDraft((current) => {
+      if (!current) return current
+      const progressStage =
+        status === 'PAUSED' || status === 'CANCELLED' ? current.progressStage : (customerStageFor(status) ?? current.progressStage)
+      return { ...current, status, progressStage, updatedAt: current.updatedAt }
+    })
     setNotice(UNSAVED)
   }
 
@@ -234,7 +245,7 @@ function Overview({
         </div>
         <div>
           <dt className="text-ink-faint">Customer Stage</dt>
-          <dd>{customerStageFor(draft.status)}</dd>
+          <dd>{resolveCustomerStage(draft)}</dd>
         </div>
         <div>
           <dt className="text-ink-faint">Progress</dt>
@@ -262,7 +273,7 @@ function Overview({
         </div>
       </dl>
       <p className="mt-6 text-sm text-ink-soft">
-        시작 조건 {ready ? '충족' : '미충족'} · Intake {counts.completed} / {counts.required}. 조건만 보여 주고 상태를 바꾸지 않습니다.
+        시작 조건 {ready ? '충족' : '미충족'} · Intake {counts.completed} / {counts.required}. 필수 항목이 없으면 그 조건은 충족입니다. 조건만 보여 주고 상태를 바꾸지 않습니다. 일시중지와 취소는 고객 진행 단계를 바꾸지 않습니다.
       </p>
       <p className="mt-2 text-sm text-ink-faint">{CUSTOMER_DELAY_POLICY}</p>
       {import.meta.env.DEV ? (

@@ -215,7 +215,7 @@ DB를 바로 만들지 않더라도 **도메인 이름과 경계**를 먼저 확
 - 최종 뼈대 확정 전 신규 비즈니스 테이블 Migration은 적용하지 않는다.
 - 기존 Migration 001~019를 덮어쓰지 않는다.
 - 020은 최종 DB 설계 시 재검토 후 유지/수정/대체 여부를 결정한다.
-- 원격 DB project ref 확인 전 어떤 프로젝트에도 적용하지 않는다.
+- 공식 대상 ref는 `qzvxypynlluqpdpmsstu`다. Final Data Model과 별도 Integration 지시 전 이 프로젝트를 포함해 어떤 프로젝트에도 Migration을 적용하지 않는다.
 
 ### 완료 기준
 나중에 스키마 작업을 시작할 때 “이름부터 다시 논의”하지 않아도 되어야 한다.
@@ -319,15 +319,17 @@ DB를 바로 만들지 않더라도 **도메인 이름과 경계**를 먼저 확
   - `SUPABASE_URL`
   - `SUPABASE_SERVICE_ROLE_KEY`
   - 필요 시 `SUPABASE_ANON_KEY`
-- 현재 SEOAH 원본 Supabase project ref: **미확인**
-- 현재 저장소: `supabase link` 미연결
+- 공식 Supabase 대상: SEOAH.STUDIO / `qzvxypynlluqpdpmsstu` / ap-northeast-2 / ACTIVE_HEALTHY / public schema EMPTY
+- 기록만 됨. `supabase link` 미연결. Vercel·기존 사이트 env는 바꾸지 않음
 - Migration 020: **파일만 존재 / 미적용**
 - submit-contact: **파일만 존재 / 미배포**
 
 ### 향후 배포 절차
 
-1. 원본 Supabase project ref 확인
-2. 기존 핵심 테이블/데이터 read-only 검증
+공식 대상 ref `qzvxypynlluqpdpmsstu`는 기록됐다. 아래는 Final Data Model과 별도 Integration 지시 뒤에만 진행한다. 지금 실행하지 않는다.
+
+1. 대상은 SEOAH.STUDIO `qzvxypynlluqpdpmsstu`. 기존 사이트 env는 그때까지 유지
+2. public schema가 비어 있음을 다시 확인. 기존 Commerce 데이터는 이 프로젝트에 없음
 3. 최종 schema와 migration 재검토
 4. Backup / rollback 기준 결정
 5. Migration dry review

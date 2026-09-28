@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePageTitle } from '../../../components/marketing/usePageTitle'
-import { toCustomerProject } from '../../engagements/mappers'
+import { customerHold, toCustomerProject } from '../../engagements/mappers'
+import { customerHoldLabels } from '../../engagements/types'
 import { useEngagementSource } from '../../engagements/useEngagementSource'
 import { EmptyState } from '../components/EmptyState'
 import { FilterTabs } from '../components/FilterTabs'
@@ -26,7 +27,9 @@ export function ProjectsPage() {
   usePageTitle('Projects — MY SEOA')
   const { engagements, ready } = useEngagementSource()
   const [tab, setTab] = useState<ProjectTab>('active')
-  const rows = engagements.map(toCustomerProject).filter((project) => project.status === tab)
+  const rows = engagements
+    .map((engagement) => ({ project: toCustomerProject(engagement), hold: customerHold(engagement.status) }))
+    .filter((row) => row.project.status === tab)
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -39,13 +42,14 @@ export function ProjectsPage() {
       ) : null}
       {ready && rows.length > 0 ? (
         <ul className="divide-y divide-line border-t border-line">
-          {rows.map((project) => (
+          {rows.map(({ project, hold }) => (
             <li key={project.id} className="py-5">
               <Link to={`/my/projects/${project.id}`} className="text-sm font-medium text-ink">
                 {project.name}
               </Link>
               <p className="mt-1 text-sm text-ink-soft">
-                {project.type} · {project.stage} · {project.progress}% · {project.expectedCompletion}
+                {project.type} · {project.stage}
+                {hold ? ` · ${customerHoldLabels[hold]}` : ''} · {project.progress}% · {project.expectedCompletion}
               </p>
             </li>
           ))}

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePageTitle } from '../../../components/marketing/usePageTitle'
-import { customerStageFor, matchesAdminFilter } from '../mappers'
+import { matchesAdminFilter, resolveCustomerStage } from '../mappers'
 import { adminListFilters, engagementStatusLabels, type AdminListFilter } from '../types'
 import { useEngagementSource } from '../useEngagementSource'
 
@@ -69,7 +69,7 @@ export function AdminEngagementListPage() {
                   {engagement.customer} · {engagement.projectType}
                 </p>
                 <p className="mt-2 text-xs text-ink-faint">
-                  {engagementStatusLabels[engagement.status]} · {customerStageFor(engagement.status)} · {engagement.actionRequired?.label ?? 'None'}
+                  {engagementStatusLabels[engagement.status]} · {resolveCustomerStage(engagement)} · {engagement.actionRequired?.label ?? 'None'}
                 </p>
               </li>
             ))}
@@ -96,7 +96,7 @@ export function AdminEngagementListPage() {
                     <td className="py-3 pr-4 text-ink-soft">{engagement.customer}</td>
                     <td className="py-3 pr-4 text-ink-soft">{engagement.projectType}</td>
                     <td className="py-3 pr-4">{engagementStatusLabels[engagement.status]}</td>
-                    <td className="py-3 pr-4">{customerStageFor(engagement.status)}</td>
+                    <td className="py-3 pr-4">{resolveCustomerStage(engagement)}</td>
                     <td className="py-3 pr-4 text-ink-soft">{engagement.actionRequired?.label ?? 'None'}</td>
                     <td className="py-3 pr-4 text-ink-faint">{engagement.expectedCompletion ?? '—'}</td>
                     <td className="py-3 text-ink-faint">{engagement.updatedAt}</td>

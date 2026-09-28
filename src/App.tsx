@@ -63,6 +63,22 @@ import { AdminContractListPage } from './features/contracts/pages/AdminContractL
 import { CustomerContractPage } from './features/contracts/pages/CustomerContractPage'
 import { AdminEngagementDetailPage } from './features/engagements/pages/AdminEngagementDetailPage'
 import { AdminEngagementListPage } from './features/engagements/pages/AdminEngagementListPage'
+import { AdminDashboardPage } from './features/admin-ops/pages/AdminDashboardPage'
+import {
+  AdminAnalyticsPage,
+  AdminCarePage,
+  AdminChatbotPage,
+  AdminContentPage,
+  AdminCustomerDetailPage,
+  AdminCustomersPage,
+  AdminIntakeQueuePage,
+  AdminOrdersPage,
+  AdminPaymentsPage,
+  AdminProductsPage,
+  AdminSaasPage,
+  AdminSettingsPage,
+  AdminSupportPage,
+} from './features/admin-ops/pages/AdminOpsPages'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -222,6 +238,20 @@ function AppRoutes() {
           }
         >
           <Route index element={<AdminPage />} />
+          <Route path="dashboard" element={<AdminDashboardPage />} />
+          <Route path="customers" element={<AdminCustomersPage />} />
+          <Route path="customers/:id" element={<AdminCustomerDetailPage />} />
+          <Route path="products" element={<AdminProductsPage />} />
+          <Route path="orders" element={<AdminOrdersPage />} />
+          <Route path="payments" element={<AdminPaymentsPage />} />
+          <Route path="intake" element={<AdminIntakeQueuePage />} />
+          <Route path="care" element={<AdminCarePage />} />
+          <Route path="saas" element={<AdminSaasPage />} />
+          <Route path="support" element={<AdminSupportPage />} />
+          <Route path="chatbot" element={<AdminChatbotPage />} />
+          <Route path="content" element={<AdminContentPage />} />
+          <Route path="analytics" element={<AdminAnalyticsPage />} />
+          <Route path="settings" element={<AdminSettingsPage />} />
           <Route path="leads" element={<LeadListPage />} />
           <Route path="leads/:id" element={<LeadDetailPage />} />
           <Route path="proposals" element={<AdminProposalListPage />} />
