@@ -1,6 +1,6 @@
 # SEOAH.STUDIO Documentation Plan — 2026-09-28
 
-> 기준 커밋: `94b0425`  
+> 기준 커밋: `25f5671`  
 > 목적: 리뉴얼 과정에서 확정된 제품·기술·운영 결정을 잃지 않되, 문서를 계속 늘리는 대신 **소수의 기준 문서(Single Source of Truth)** 로 정리한다.
 >
 > 현재 원칙: **UI/업무 흐름의 뼈대를 먼저 완성하고, 최종 데이터 모델 확정 후 Migration과 실제 연동을 진행한다.**  
@@ -38,18 +38,21 @@
 - Step 2 — Public IA
 - Step 3 — Contact / Signup 코드
 - Step 4 — MY SEOA UI Skeleton
-- 다음 단계
+- UI Skeleton 완료
   - Step 5 Project Request / Leads
   - Step 6 Proposal / Contract
   - Step 7 Engagement / Intake
   - Step 8 Admin Operations
-  - Final DB Design / Migration / Integration
+- 다음 단계
+  - Step 9 Final Domain / Data Model Freeze + End-to-End Workflow Audit
+  - Step 9에서는 Migration을 적용하지 않음
+  - 그 다음 Final DB Design / Migration / Integration
 - 실제 미적용 항목
   - Migration 020
   - submit-contact deploy
   - Guest Contact DB persistence
   - account_type 실제 DB 저장 검증
-- Supabase 원본 프로젝트 ref 미확인 상태
+- 공식 Supabase 대상 확정: SEOAH.STUDIO / `qzvxypynlluqpdpmsstu` / ap-northeast-2 / public schema EMPTY. link와 Migration은 아직 하지 않음
 - Vercel 현재 SEOAH.STUDIO 배포 상태
 - Legacy regression 보호 범위
 
@@ -305,7 +308,7 @@ DB를 바로 만들지 않더라도 **도메인 이름과 경계**를 먼저 확
 
 #### GitHub
 - repository: `happysuyeun-rgb/Seoah-studio`
-- main 최신 기준: `94b0425`
+- main 최신 기준: `25f5671`
 
 #### Vercel
 - SEOAH.STUDIO latest commit deployment: 성공
@@ -400,7 +403,7 @@ P0 문서가 정리된 뒤 필요할 때만 만든다.
 2. `ARCHITECTURE_AND_BOUNDARIES.md`
 3. `PRODUCT_IA_AND_FLOWS.md`
 
-이 세 문서가 있으면 Step 5~8 개발 중 방향이 흔들리지 않는다.
+Step 5~8 UI Skeleton은 `25f5671`에서 완료됐다. 이 세 문서는 Step 9의 도메인 확정과 흐름 감사에서 기준이 된다. Migration은 그 단계에서도 적용하지 않는다.
 
 ### 2차 — DB 설계 전에
 4. `DOMAIN_AND_DATA_MODEL_DECISIONS.md`

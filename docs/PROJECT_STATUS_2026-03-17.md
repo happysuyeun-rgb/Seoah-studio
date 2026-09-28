@@ -1,6 +1,6 @@
 # SEOAH.STUDIO 프로젝트 상태 보고서
 
-> **최종 갱신일:** 2026-09-28 (Admin Operations UI skeleton, Supabase 대상 기록)  
+> **최종 갱신일:** 2026-09-28 (Step 8까지 UI 완료, 기준 커밋 `25f5671`)  
 > **기준 문서:** full_spec_v2_2_final.html (기능정의서 + 화면설계서 v2.2), SEOAH_STUDIO_Master_Planning_v4.html
 
 ---
@@ -136,7 +136,9 @@
 
 ## 2. 구현 예정 (미완료)
 
-### 2.0 리뉴얼 다음 단계 (Step 4 이후, 승인 전 착수 금지)
+### 2.0 리뉴얼 단계
+
+Step 5–8 UI Skeleton은 `25f5671`까지 완료됐다. 다음은 Step 9, Final Domain / Data Model Freeze와 End-to-End Workflow Audit이다. Step 9에서 Migration은 적용하지 않는다.
 
 | # | 항목 | 비고 |
 |---|------|------|
@@ -147,6 +149,7 @@
 | R4b | Proposal / Contract UI | 화면은 Step 6. 저장·서명·결제·Engagement는 없음 |
 | R5 | engagements 스키마 | 화면은 Step 7. 테이블은 Final Integration 전 만들지 않음. 기존 `projects` 재사용 금지 |
 | R6 | Admin Operations UI | 화면은 Step 8. `/admin` Legacy 유지. 저장·권한 분리·데이터 통합은 이후 |
+| R7 | Step 9 Domain freeze / workflow audit | 문서와 흐름 감사. DB Migration, link, deploy, env 교체는 하지 않음 |
 
 ### 2.1 Phase F (P1)
 

@@ -2,8 +2,8 @@
 
 **Date:** 2026-09-28  
 **Repository:** `happysuyeun-rgb/Seoah-studio`  
-**Audit basis:** GitHub `main` as of commit `903cc99`  
-**Latest feature commit:** `903cc99`  
+**Audit basis:** GitHub `main` as of commit `25f5671`  
+**Latest feature commit:** `25f5671`  
 **Purpose:** 현재 코드 기준으로 완료/누락/의도적 보류 항목을 구분하고, Cursor가 다음 작업을 안전하게 이어갈 수 있도록 실행 순서를 고정한다.
 
 > 이 문서는 “무엇이 아직 안 됐는가”를 기록하는 작업 인계서다.  
@@ -53,6 +53,11 @@
   - refund
 - Production MY SEOA 데이터는 가짜 데이터 대신 Empty State를 기본으로 사용
 - 기존 `public.projects`는 Legacy customization session으로 유지
+- Step 5–8 UI Skeleton
+  - Project Request / Leads
+  - Proposal / Contract
+  - Engagement / Intake
+  - Admin Operations
 
 ### 아직 구현되지 않은 핵심 기능
 
@@ -67,9 +72,10 @@
 
 **지금은 신규 DB Migration을 적용하지 않는다.**
 
-먼저 UI/업무 흐름 뼈대를 완성하고,
-그 뒤 최종 Domain/Data Model을 확정한 다음
-정확한 SEOAH Supabase 프로젝트에만 Migration을 적용한다.
+Step 5–8 UI Skeleton은 `25f5671`까지 완료됐다.
+다음은 Step 9, Final Domain / Data Model Freeze와 End-to-End Workflow Audit이다.
+Step 9에서도 Migration은 적용하지 않는다.
+공식 대상 `qzvxypynlluqpdpmsstu`에 적용하는 것은 그 다음 Integration 지시 이후다.
 
 ---
 
@@ -751,12 +757,14 @@ Step 5와 함께 또는 직전에 처리:
 
 ## Phase B — UI / Workflow Skeleton
 
-순서 고정:
+`25f5671` 기준 완료:
 
 1. Step 5 — Project Request + Leads
 2. Step 6 — Proposal + Contract
 3. Step 7 — Engagement + Intake
 4. Step 8 — New Admin Operations
+
+다음은 Step 9다. Final Domain / Data Model Freeze와 End-to-End Workflow Audit만 진행하고, DB Migration은 적용하지 않는다.
 
 각 Step마다:
 
@@ -787,9 +795,9 @@ Step 5와 함께 또는 직전에 처리:
 
 ## Phase D — Final Data & Runtime Integration
 
-UI/업무 흐름 확정 뒤에만:
+UI/업무 흐름 확정 뒤에만. Step 9에서는 여기까지 내려가지 않는다.
 
-1. Supabase 원본 식별
+1. 공식 대상은 SEOAH.STUDIO `qzvxypynlluqpdpmsstu`로 기록됨. public schema는 비어 있고 link하지 않음
 2. Existing DB read-only audit
 3. Final schema
 4. Migration review
@@ -824,20 +832,21 @@ UI/업무 흐름 확정 뒤에만:
 
 # 15. 현재 다음 작업
 
-현재 가장 자연스러운 다음 작업은:
+Step 5 / 6 / 7 / 8 UI Skeleton은 `25f5671` 기준으로 완료됐다.
 
-> **Step 5 — Studio Project Request + Lead / Admin Leads UI Skeleton**
+현재 다음 단계:
 
-단, Step 5 작업 안에서 다음 P0 cleanup을 함께 포함한다.
+> **Step 9 — Final Domain / Data Model Freeze + End-to-End Workflow Audit**
 
-- `/studio#request` → `/studio/request`
-- 기존 Studio mock submit 제거
-- Public / MY SEOA shell boundary 정리
-- AdminRoute navigation 안정화
-- FAQ 잘못된 route copy 수정
-- Contact attachment dead code 삭제
+Step 9에서도 DB Migration은 적용하지 않는다. `supabase link`, `db push`, CREATE TABLE, RLS, Edge Function deploy, Storage, Vercel production env 변경은 하지 않는다.
 
-그 뒤 Step 6으로 이동한다.
+아래는 아직 해결되지 않았다.
+
+- Proposal Draft → Preview → Send
+- Proposal Approved → Contract 준비 연결
+- Project Request sessionStorage stale cleanup
+- Modal full focus trap
+- Project Request 필수 입력 기준
 
 ---
 
@@ -848,7 +857,7 @@ UI/업무 흐름 확정 뒤에만:
 
 다음은 아직 확인된 사실로 간주하지 않는다.
 
-- 어떤 Supabase 프로젝트가 실제 Production DB인지
+- 현재 운영 사이트의 env가 아직 이 공식 대상을 가리키는지. 공식 대상 `qzvxypynlluqpdpmsstu`는 기록만 됐고 public schema는 비어 있다
 - Migration 020이 적용됐는지
 - submit-contact가 실제 배포됐는지
 - Google/Kakao signup이 실제 성공하는지
