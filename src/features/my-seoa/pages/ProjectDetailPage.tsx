@@ -39,7 +39,7 @@ export function ProjectDetailPage() {
         <div>
           <ProgressTimeline current={null} />
           <div className="mt-8">
-            <EmptyState title="진행 중인 프로젝트가 없습니다." action={{ to: '/studio', label: '새 프로젝트 의뢰' }} />
+            <EmptyState title="진행 중인 프로젝트가 없습니다." action={{ to: '/studio/request', label: '새 프로젝트 의뢰' }} />
           </div>
         </div>
       ) : (

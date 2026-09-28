@@ -1,11 +1,8 @@
-import { useState, type FormEvent } from 'react'
-import { Button } from '../components/ui/Button'
+import { ButtonLink } from '../components/ui/Button'
 import { SectionHeading } from '../components/ui/SectionHeading'
-import { SelectField, TextAreaField, TextField } from '../components/marketing/Fields'
 import { MarketingSection } from '../components/marketing/MarketingSection'
 import { PageHero } from '../components/marketing/PageHero'
 import { usePageTitle } from '../components/marketing/usePageTitle'
-import { toast } from '../store/toastStore'
 
 const builds = [
   { name: 'Website', text: '서비스와 회사를 설명하는 사이트.' },
@@ -28,23 +25,8 @@ const guides = [
   { name: 'Advanced', price: '1,200만원~', text: '복잡한 권한과 운영이 필요한 개별 범위.' },
 ]
 
-const projectTypes = ['Website', 'MVP', 'AI Product', 'Internal Tool']
-
 export function StudioPage() {
   usePageTitle('Studio — SEOAH.STUDIO')
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [projectType, setProjectType] = useState(projectTypes[0])
-  const [message, setMessage] = useState('')
-
-  const submit = (event: FormEvent) => {
-    event.preventDefault()
-    if (!name.trim() || !email.trim() || !message.trim()) {
-      toast.error('이름, 이메일, 내용을 입력해 주세요.')
-      return
-    }
-    toast.info('문의 접수를 준비하고 있습니다.')
-  }
 
   return (
     <main>
@@ -113,20 +95,13 @@ export function StudioPage() {
       </MarketingSection>
 
       <MarketingSection id="request" className="scroll-mt-24">
-        <SectionHeading title="프로젝트 의뢰하기" description="지금 아는 범위만 적어도 됩니다." />
-        <form onSubmit={submit} className="mt-10 grid max-w-xl gap-6">
-          <TextField label="이름" name="name" value={name} onChange={(event) => setName(event.target.value)} autoComplete="name" />
-          <TextField label="이메일" name="email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} autoComplete="email" />
-          <SelectField label="프로젝트 유형" name="projectType" value={projectType} onChange={(event) => setProjectType(event.target.value)}>
-            {projectTypes.map((type) => (
-              <option key={type} value={type}>
-                {type}
-              </option>
-            ))}
-          </SelectField>
-          <TextAreaField label="내용" name="message" value={message} onChange={(event) => setMessage(event.target.value)} />
-          <Button type="submit">보내기</Button>
-        </form>
+        <SectionHeading title="프로젝트 의뢰하기" description="지금 아는 범위만 적어도 됩니다. 이 페이지에서는 저장하지 않습니다." />
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+          <ButtonLink to="/studio/request">프로젝트 의뢰하기</ButtonLink>
+          <ButtonLink to="/contact?topic=studio" variant="secondary">
+            일반 문의
+          </ButtonLink>
+        </div>
       </MarketingSection>
     </main>
   )

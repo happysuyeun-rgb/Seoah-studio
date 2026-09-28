@@ -22,7 +22,7 @@ const staticFaqs: FaqItem[] = [
     id: 'ready-2',
     group: 'Ready',
     question: '지금 템플릿은 어디서 보나요?',
-    answer: '새 Ready 페이지는 상위 소개입니다. 현재 공개된 템플릿은 /templates 갤러리에서 그대로 볼 수 있습니다.',
+    answer: 'Ready 페이지에서 현재 공개된 템플릿 갤러리로 이동할 수 있습니다.',
   },
   {
     id: 'studio-1',

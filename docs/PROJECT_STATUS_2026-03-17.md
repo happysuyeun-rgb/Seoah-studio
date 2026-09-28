@@ -1,6 +1,6 @@
 # SEOAH.STUDIO 프로젝트 상태 보고서
 
-> **최종 갱신일:** 2026-09-28 (리뉴얼 Step 4: MY SEOA UI)  
+> **최종 갱신일:** 2026-09-28 (리뉴얼 Step 6: Proposal / Contract UI)  
 > **기준 문서:** full_spec_v2_2_final.html (기능정의서 + 화면설계서 v2.2), SEOAH_STUDIO_Master_Planning_v4.html
 
 ---
@@ -84,8 +84,29 @@
 | UI | Home conversion polish | ✅ 완료 | Hero composition, Ready preview, Care/Work/Footer. DB·저장 로직 미변경 |
 | 데이터 | Guest Contact | ✅ 코드 완료 | `submit-contact` 작성. 첨부 입력은 화면에서 제거. migration 020과 함수 배포는 Supabase 프로젝트 연결 후 |
 | 인증 | 회원가입 / account_type | ✅ 완료 | `/signup`, `/account-type`. `users.account_type`는 nullable. `is_admin` 유지 |
-| 범위 | Lead, Studio 의뢰 저장 | 미구현 | Step 5 이후. 이번 단계에서 시작하지 않음 |
+| 범위 | Lead, Studio 의뢰 저장 | UI만 | Step 5에서 다단계 의뢰 화면과 `/admin/leads` 화면을 추가. DB 저장은 하지 않음 |
 | UI | MY SEOA 포털 | ✅ 화면만 | `/my` 및 하위 화면. 데이터는 빈 상태. DB·기존 `/mypage` 유지 |
+
+### 1.5 리뉴얼 Step 5 — Project Request / Admin Leads UI (2026-09-28)
+
+| 구분 | 항목 | 상태 | 비고 |
+|------|------|------|------|
+| P0 | Public / MY SEOA / Admin 크롬 분리 | ✅ 완료 | `/my`, `/admin`에서 Public GNB·Footer·Chatbot 숨김. `/mypage`는 Public 크롬 유지 |
+| P0 | AdminRoute | ✅ 완료 | 권한 없음은 `<Navigate>`로 이동. `is_admin` 정책 유지 |
+| P0 | FAQ 템플릿 안내 문구 | ✅ 완료 | `/templates` 단독 경로처럼 보이지 않게 수정 |
+| P0 | Contact 첨부 dead code | ✅ 완료 | `attachmentError` 삭제. 문의 검증은 유지 |
+| UI | `/studio/request` | ✅ 화면만 | 11단계 초안. 운영 제출은 Contact로 넘김. DB 저장 없음 |
+| UI | `/admin/leads` | ✅ 화면만 | 운영 빌드는 빈 목록. 개발 빌드만 Example fixture |
+| 범위 | Proposal, Contract, Engagement, migration | Proposal·Contract 화면만 | Step 6. 저장·서명·결제·Engagement는 없음 |
+
+### 1.6 리뉴얼 Step 6 — Proposal / Contract UI (2026-09-28)
+
+| 구분 | 항목 | 상태 | 비고 |
+|------|------|------|------|
+| UI | `/admin/proposals` 작성·미리보기 | ✅ 화면만 | 고객 문서와 같은 `ProposalDocument`. 저장 없음 |
+| UI | `/my/proposals` 검토 | ✅ 화면만 | 승인·수정요청·거절은 개발 흐름. 운영은 빈 목록 |
+| UI | `/admin/contracts`, `/my/contracts/:id` | ✅ 화면만 | 동의와 계약금 안내. PortOne·Engagement 없음 |
+| 원칙 | Engagement 생성 조건 | 문서만 | Proposal Approved + Contract Agreed + Deposit Paid 이후. 이번 단계에서는 만들지 않음 |
 
 ---
 
@@ -98,7 +119,8 @@
 | R1 | Public IA 페이지 (Brand, Studio, SaaS, Work, About, Contact) | ✅ Step 2에서 페이지 생성 |
 | R2 | 회원가입 Individual / Business | ✅ Step 3. Guest Contact 포함. 첨부 저장·문의 이메일 자동 연결은 이후 |
 | R3 | MY SEOA 데이터 연결 | UI skeleton은 Step 4. 주문·다운로드·문의 조회는 아직 연결하지 않음 |
-| R4 | Studio Lead, `/admin/leads` | 기존 AdminPage 탭 분리는 별도 작업 |
+| R4 | Studio Lead UI, `/admin/leads` | 화면은 Step 5. 저장은 아직 없음 |
+| R4b | Proposal / Contract UI | 화면은 Step 6. 저장·서명·결제·Engagement는 없음 |
 | R5 | engagements 스키마 | V1.5. 기존 `projects` 재사용 금지 |
 
 ### 2.1 Phase F (P1)
@@ -185,12 +207,16 @@
 | Contact 첨부파일 Storage | | ⬜ |
 | 가입 후 guest 문의 이메일 자동 연결 | | ⬜ |
 | MY SEOA 화면 | ✅ | 데이터 연결 ⬜ |
+| Studio 의뢰 / Admin Leads 화면 | ✅ | 저장 ⬜ |
+| Proposal / Contract 화면 | ✅ | 저장·결제 ⬜ |
 
 ---
 
 ## 5. 사용자 직접 작업 항목 & 방법
 
 ### 5.1 필수 — Supabase 마이그레이션 적용
+
+Step 5에서는 마이그레이션을 적용하지 않았습니다. `020_guest_inquiries_account_type.sql`은 SEOAH Supabase 프로젝트가 확인되기 전에는 실행하지 않습니다. 다른 프로젝트에 적용하지 않습니다.
 
 **방법 1: Supabase CLI**
 ```bash

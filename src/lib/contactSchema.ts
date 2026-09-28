@@ -13,9 +13,6 @@ export const inquiryTypeLabels: Record<InquiryType, string> = {
   other: 'Other',
 }
 
-const allowedExtensions = ['pdf', 'png', 'jpg', 'jpeg', 'docx', 'pptx', 'zip']
-const maxAttachmentBytes = 10 * 1024 * 1024
-
 export const contactSchema = z.object({
   name: z.string().trim().min(2, '이름은 2자 이상이어야 합니다.').max(50, '이름은 50자 이하여야 합니다.'),
   email: z.string().trim().email('이메일 형식을 확인해 주세요.'),
@@ -30,11 +27,3 @@ export const contactSchema = z.object({
 })
 
 export type ContactInput = z.infer<typeof contactSchema>
-
-export function attachmentError(file: File | null): string | null {
-  if (!file) return null
-  const extension = file.name.split('.').pop()?.toLowerCase() ?? ''
-  if (!allowedExtensions.includes(extension)) return '첨부파일은 pdf, png, jpg, jpeg, docx, pptx, zip만 가능합니다.'
-  if (file.size > maxAttachmentBytes) return '첨부파일은 10MB 이하여야 합니다.'
-  return null
-}

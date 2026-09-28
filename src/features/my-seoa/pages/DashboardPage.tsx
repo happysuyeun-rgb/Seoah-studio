@@ -46,7 +46,7 @@ export function DashboardPage() {
             </div>
           </div>
         ) : (
-          <EmptyState title="진행 중인 Studio 프로젝트가 없습니다." action={{ to: '/studio', label: '프로젝트 의뢰하기' }} />
+          <EmptyState title="진행 중인 Studio 프로젝트가 없습니다." action={{ to: '/studio/request', label: '프로젝트 의뢰하기' }} />
         )}
       </section>
 
@@ -108,7 +108,7 @@ export function DashboardPage() {
           <ButtonLink to="/ready" size="sm">
             Ready 제품 보기
           </ButtonLink>
-          <ButtonLink to="/studio" variant="secondary" size="sm">
+          <ButtonLink to="/studio/request" variant="secondary" size="sm">
             프로젝트 의뢰하기
           </ButtonLink>
           <ButtonLink to="/contact" variant="secondary" size="sm">

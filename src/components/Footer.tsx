@@ -13,7 +13,7 @@ const columns = [
     title: 'Studio',
     links: [
       { to: '/studio', label: 'Studio' },
-      { to: '/studio#request', label: '프로젝트 의뢰' },
+      { to: '/studio/request', label: '프로젝트 의뢰' },
     ],
   },
   {

@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuthStore, DEV_MOCK_USER_ID_CONST } from '../store/authStore'
 import { ProtectedRoute } from './ProtectedRoute'
 
 export function AdminRoute({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate()
   const { user } = useAuthStore()
 
   const { data: profile, isLoading } = useQuery({
@@ -32,8 +31,7 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
     )
   }
   if (!profile?.is_admin) {
-    navigate('/', { replace: true })
-    return null
+    return <Navigate to="/" replace />
   }
   return <>{children}</>
 }

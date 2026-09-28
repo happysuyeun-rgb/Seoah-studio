@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../../store/authStore'
 
 const items = [
@@ -17,6 +17,18 @@ function displayName(name: unknown, email: string | undefined) {
   if (typeof name === 'string' && name.trim()) return name.trim()
   if (email) return email.split('@')[0] ?? email
   return '회원'
+}
+
+function AccountBlock({ name, email, onLogout }: { name: string; email: string; onLogout: () => void }) {
+  return (
+    <div>
+      <p className="truncate text-sm font-medium text-ink">{name}</p>
+      <p className="truncate text-xs text-ink-faint">{email}</p>
+      <button type="button" onClick={onLogout} className="mt-3 text-sm text-ink-soft hover:text-ink">
+        로그아웃
+      </button>
+    </div>
+  )
 }
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
@@ -42,32 +54,42 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
 export function MySeoLayout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const user = useAuthStore((state) => state.user)
+  const signOut = useAuthStore((state) => state.signOut)
   const [menuState, setMenuState] = useState({ path: location.pathname, open: false })
   const menuOpen = menuState.open && menuState.path === location.pathname
   const email = user?.email ?? ''
   const name = displayName(user?.user_metadata?.name, email || undefined)
 
+  const logout = async () => {
+    await signOut()
+    navigate('/')
+  }
+
   return (
-    <div className="flex min-h-[calc(100vh-4.5rem)] bg-canvas">
+    <div className="flex min-h-screen bg-canvas">
       <aside className="hidden w-60 shrink-0 border-r border-line bg-paper lg:flex lg:flex-col">
         <div className="border-b border-line px-5 py-6">
-          <p className="text-xs tracking-tight text-ink-faint">SEOAH.STUDIO</p>
+          <Link to="/" className="text-xs tracking-tight text-ink-faint hover:text-ink">
+            SEOAH.STUDIO
+          </Link>
           <p className="mt-1 text-sm font-semibold tracking-tight text-ink">MY SEOA</p>
         </div>
         <nav className="flex-1 px-3 py-4" aria-label="MY SEOA">
           <NavList />
         </nav>
         <div className="border-t border-line px-5 py-4">
-          <p className="truncate text-sm font-medium text-ink">{name}</p>
-          <p className="truncate text-xs text-ink-faint">{email}</p>
+          <AccountBlock name={name} email={email} onLogout={() => void logout()} />
         </div>
       </aside>
 
       <div className="min-w-0 flex-1">
         <header className="flex items-center justify-between border-b border-line bg-paper px-4 py-3 lg:hidden">
           <div>
-            <p className="text-xs text-ink-faint">SEOAH.STUDIO</p>
+            <Link to="/" className="text-xs text-ink-faint hover:text-ink">
+              SEOAH.STUDIO
+            </Link>
             <p className="text-sm font-semibold text-ink">MY SEOA</p>
           </div>
           <button
@@ -87,8 +109,7 @@ export function MySeoLayout() {
           <div className="border-b border-line bg-paper px-3 py-3 lg:hidden">
             <NavList onNavigate={() => setMenuState({ path: location.pathname, open: false })} />
             <div className="mt-3 border-t border-line px-3 py-3">
-              <p className="truncate text-sm font-medium text-ink">{name}</p>
-              <p className="truncate text-xs text-ink-faint">{email}</p>
+              <AccountBlock name={name} email={email} onLogout={() => void logout()} />
             </div>
           </div>
         ) : null}

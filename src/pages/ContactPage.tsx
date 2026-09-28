@@ -6,6 +6,7 @@ import { MarketingSection } from '../components/marketing/MarketingSection'
 import { PageHero } from '../components/marketing/PageHero'
 import { usePageTitle } from '../components/marketing/usePageTitle'
 import { contactSchema, inquiryTypeLabels, inquiryTypes, type InquiryType } from '../lib/contactSchema'
+import { readRequestHandoff } from '../lib/requestHandoff'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
 import { toast } from '../store/toastStore'
@@ -37,6 +38,17 @@ export function ContactPage() {
     setName((current) => current || metaName)
     setEmail((current) => current || user.email || '')
   }, [user])
+
+  useEffect(() => {
+    if (params.get('topic') !== 'studio') return
+    const handoff = readRequestHandoff()
+    if (!handoff) return
+    setName((current) => current || handoff.name.slice(0, 50))
+    setEmail((current) => current || handoff.email.slice(0, 200))
+    setPhone((current) => current || handoff.phone.slice(0, 30))
+    setMessage((current) => current || handoff.message.slice(0, 3000))
+    setInquiryType('studio')
+  }, [params])
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()

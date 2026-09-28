@@ -31,7 +31,7 @@ export function ProjectsPage() {
       <PageHeader title="Projects" description="Studio에서 진행하는 프로젝트입니다." />
       <FilterTabs value={tab} options={tabs} onChange={setTab} />
       {rows.length === 0 ? (
-        <EmptyState title={emptyCopy[tab]} action={tab === 'active' ? { to: '/studio', label: '새 프로젝트 의뢰' } : undefined} />
+        <EmptyState title={emptyCopy[tab]} action={tab === 'active' ? { to: '/studio/request', label: '새 프로젝트 의뢰' } : undefined} />
       ) : (
         <ul className="divide-y divide-line border-t border-line">
           {rows.map((project) => (

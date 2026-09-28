@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { supabase } from './lib/supabase'
 import { useAuthStore, getDevMockAuth } from './store/authStore'
 import { AppShell } from './components/shell/AppShell'
-import { ChatbotWidget } from './components/ChatbotWidget'
+import { AdminFrame } from './components/shell/AdminFrame'
 import { DevFloatingButtons } from './components/DevFloatingButtons'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { AdminRoute } from './components/AdminRoute'
@@ -52,6 +52,15 @@ import { BillingPage } from './features/my-seoa/pages/BillingPage'
 import { MySupportPage } from './features/my-seoa/pages/MySupportPage'
 import { NotificationsPage } from './features/my-seoa/pages/NotificationsPage'
 import { AccountPage } from './features/my-seoa/pages/AccountPage'
+import { ProjectRequestPage } from './features/project-request/pages/ProjectRequestPage'
+import { LeadDetailPage } from './features/leads/pages/LeadDetailPage'
+import { LeadListPage } from './features/leads/pages/LeadListPage'
+import { AdminProposalDetailPage } from './features/proposals/pages/AdminProposalDetailPage'
+import { AdminProposalEditorPage } from './features/proposals/pages/AdminProposalEditorPage'
+import { AdminProposalListPage } from './features/proposals/pages/AdminProposalListPage'
+import { AdminContractDetailPage } from './features/contracts/pages/AdminContractDetailPage'
+import { AdminContractListPage } from './features/contracts/pages/AdminContractListPage'
+import { CustomerContractPage } from './features/contracts/pages/CustomerContractPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,13 +102,13 @@ function AuthListener() {
 function AppRoutes() {
   return (
     <AppShell>
-      <ChatbotWidget />
       <DevFloatingButtons />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/ready" element={<ReadyPage />} />
         <Route path="/brand" element={<BrandPage />} />
         <Route path="/studio" element={<StudioPage />} />
+        <Route path="/studio/request" element={<ProjectRequestPage />} />
         <Route path="/care" element={<CarePage />} />
         <Route path="/saas" element={<SaasPage />} />
         <Route path="/work" element={<WorkPage />} />
@@ -196,6 +205,7 @@ function AppRoutes() {
           <Route path="support" element={<MySupportPage />} />
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="account" element={<AccountPage />} />
+          <Route path="contracts/:id" element={<CustomerContractPage />} />
         </Route>
         <Route path="/support" element={<SupportPage />} />
         <Route path="/terms" element={<TermsPage />} />
@@ -205,10 +215,20 @@ function AppRoutes() {
           path="/admin"
           element={
             <AdminRoute>
-              <AdminPage />
+              <AdminFrame />
             </AdminRoute>
           }
-        />
+        >
+          <Route index element={<AdminPage />} />
+          <Route path="leads" element={<LeadListPage />} />
+          <Route path="leads/:id" element={<LeadDetailPage />} />
+          <Route path="proposals" element={<AdminProposalListPage />} />
+          <Route path="proposals/new" element={<AdminProposalEditorPage />} />
+          <Route path="proposals/:id" element={<AdminProposalDetailPage />} />
+          <Route path="proposals/:id/edit" element={<AdminProposalEditorPage />} />
+          <Route path="contracts" element={<AdminContractListPage />} />
+          <Route path="contracts/:id" element={<AdminContractDetailPage />} />
+        </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <Toast />

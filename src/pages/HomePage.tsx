@@ -79,7 +79,7 @@ export function HomePage() {
         actions={
           <>
             <ButtonLink to="/ready">제품 둘러보기</ButtonLink>
-            <ButtonLink to="/studio" variant="secondary">
+            <ButtonLink to={REQUEST_PATH} variant="secondary">
               프로젝트 의뢰하기
             </ButtonLink>
           </>
@@ -254,7 +254,7 @@ export function HomePage() {
           현재 상황을 알려주시면 Ready 제품이 맞는지, 맞춤 제작이 필요한지부터 함께 정리합니다.
         </p>
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink to="/studio">프로젝트 이야기하기</ButtonLink>
+          <ButtonLink to={REQUEST_PATH}>프로젝트 이야기하기</ButtonLink>
           <ButtonLink to="/contact" variant="secondary">
             문의하기
           </ButtonLink>

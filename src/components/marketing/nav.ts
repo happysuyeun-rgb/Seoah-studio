@@ -7,4 +7,4 @@ export const PRIMARY_NAV = [
   { to: '/about', label: 'About' },
 ] as const
 
-export const REQUEST_PATH = '/studio#request'
+export const REQUEST_PATH = '/studio/request'
