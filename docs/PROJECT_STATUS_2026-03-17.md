@@ -1,6 +1,6 @@
 # SEOAH.STUDIO 프로젝트 상태 보고서
 
-> **최종 갱신일:** 2026-09-28 (리뉴얼 Step 6: Proposal / Contract UI)  
+> **최종 갱신일:** 2026-09-28 (리뉴얼 Step 7: Engagement / Intake UI)  
 > **기준 문서:** full_spec_v2_2_final.html (기능정의서 + 화면설계서 v2.2), SEOAH_STUDIO_Master_Planning_v4.html
 
 ---
@@ -106,7 +106,16 @@
 | UI | `/admin/proposals` 작성·미리보기 | ✅ 화면만 | 고객 문서와 같은 `ProposalDocument`. 저장 없음 |
 | UI | `/my/proposals` 검토 | ✅ 화면만 | 승인·수정요청·거절은 개발 흐름. 운영은 빈 목록 |
 | UI | `/admin/contracts`, `/my/contracts/:id` | ✅ 화면만 | 동의와 계약금 안내. PortOne·Engagement 없음 |
-| 원칙 | Engagement 생성 조건 | 문서만 | Proposal Approved + Contract Agreed + Deposit Paid 이후. 이번 단계에서는 만들지 않음 |
+| 원칙 | Engagement 생성 조건 | 문서만 | Proposal Approved + Contract Agreed + Deposit Paid 이후. Step 6에서는 만들지 않음 |
+
+### 1.7 리뉴얼 Step 7 — Engagement / Intake UI (2026-09-28)
+
+| 구분 | 항목 | 상태 | 비고 |
+|------|------|------|------|
+| UI | `/admin/engagements` | ✅ 화면만 | 라벨 Projects. 운영은 빈 목록 |
+| UI | `/my/projects` | ✅ 화면만 | 기존 메뉴 유지. Engagement mapper |
+| UI | Intake, Milestone, Review, Files, Messages, Change Request | ✅ 화면만 | 업로드·저장·결제 없음 |
+| 원칙 | `public.projects` | 유지 | Studio 프로젝트로 재사용하지 않음. engagements 테이블 없음 |
 
 ---
 
@@ -121,7 +130,7 @@
 | R3 | MY SEOA 데이터 연결 | UI skeleton은 Step 4. 주문·다운로드·문의 조회는 아직 연결하지 않음 |
 | R4 | Studio Lead UI, `/admin/leads` | 화면은 Step 5. 저장은 아직 없음 |
 | R4b | Proposal / Contract UI | 화면은 Step 6. 저장·서명·결제·Engagement는 없음 |
-| R5 | engagements 스키마 | V1.5. 기존 `projects` 재사용 금지 |
+| R5 | engagements 스키마 | 화면은 Step 7. 테이블은 Final Integration 전 만들지 않음. 기존 `projects` 재사용 금지 |
 
 ### 2.1 Phase F (P1)
 
@@ -209,31 +218,25 @@
 | MY SEOA 화면 | ✅ | 데이터 연결 ⬜ |
 | Studio 의뢰 / Admin Leads 화면 | ✅ | 저장 ⬜ |
 | Proposal / Contract 화면 | ✅ | 저장·결제 ⬜ |
+| Engagement / Intake 화면 | ✅ | 저장·업로드 ⬜ |
 
 ---
 
 ## 5. 사용자 직접 작업 항목 & 방법
 
-### 5.1 필수 — Supabase 마이그레이션 적용
+### 5.1 Supabase Migration — Final Integration 단계까지 보류
 
-Step 5에서는 마이그레이션을 적용하지 않았습니다. `020_guest_inquiries_account_type.sql`은 SEOAH Supabase 프로젝트가 확인되기 전에는 실행하지 않습니다. 다른 프로젝트에 적용하지 않습니다.
+지금 실행할 작업이 아닙니다. SEOAH Supabase 프로젝트가 확인되고, UI 흐름 뒤의 최종 데이터 모델이 정해진 Final Integration 단계에서만 검토합니다.
 
-**방법 1: Supabase CLI**
-```bash
-cd c:\Dev\seoah
-supabase db push
-```
+`supabase db push`를 실행하지 않습니다. SQL Editor에서 마이그레이션을 적용하지 않습니다. 다른 Supabase 프로젝트에도 적용하지 않습니다.
 
-**방법 2: SQL Editor에서 수동 실행**
-1. Supabase 대시보드 → SQL Editor
-2. 아래 순서대로 실행:
-   - `supabase/migrations/016_policy_agreements.sql`
-   - `supabase/migrations/017_refund_requests_and_bucket.sql`
-   - `supabase/migrations/018_orders_refund_columns.sql`
-   - `supabase/migrations/019_refund_attachments_bucket.sql`
-   - `supabase/migrations/020_guest_inquiries_account_type.sql`
+나중에 대상이 확정되면 볼 파일:
 
-> ⚠ v2.1 마이그레이션(009~015)이 아직 적용되지 않았다면, 먼저 001~015를 순서대로 적용한 후 016~019를 적용하세요.
+- `supabase/migrations/016_policy_agreements.sql`
+- `supabase/migrations/017_refund_requests_and_bucket.sql`
+- `supabase/migrations/018_orders_refund_columns.sql`
+- `supabase/migrations/019_refund_attachments_bucket.sql`
+- `supabase/migrations/020_guest_inquiries_account_type.sql`
 
 ---
 

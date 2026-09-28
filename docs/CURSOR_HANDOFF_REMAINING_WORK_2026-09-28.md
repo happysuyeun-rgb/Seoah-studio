@@ -56,15 +56,8 @@
 
 ### 아직 구현되지 않은 핵심 기능
 
-- Studio Project Request 다단계 Flow
-- Leads
-- Admin Leads
-- Admin Proposal Editor
-- Contract
-- Deposit Flow
-- Engagement
-- Intake
-- Milestone / Review / Approval / Files / Messages / Change Request 실제 기능
+- Step 5–7 화면의 실제 저장 (Lead, Proposal, Contract, Engagement, Intake)
+- Milestone / Review / Files / Messages / Change Request persistence
 - New Admin Operations
 - MY SEOA 실제 DB 데이터 연결
 - 최종 New Platform 데이터 모델 / Migration
@@ -338,24 +331,15 @@ Storage 정책과 함께 다시 설계한다.
 
 ### Projects
 
-현재 CustomerProject UI type만 존재.
+`/my/projects`는 Engagement display mapper를 사용한다. 운영 빌드는 빈 목록이다.
 
 실제 Studio 프로젝트는 절대 legacy `projects`에서 읽지 않는다.
 
-향후 `engagements` 생성 후 연결한다.
+`engagements` 테이블은 아직 없다.
 
 ### Proposals
 
-Customer list/detail shell만 있다.
-
-아직 없음:
-
-- Admin Proposal Editor
-- Proposal version
-- customer approve
-- revision request
-- reject
-- actual status mutation
+Admin 작성·미리보기와 고객 검토 UI는 Step 6에서 있다. 저장과 상태 mutation은 없다.
 
 ### Billing
 
@@ -395,135 +379,71 @@ Legacy `/mypage/settings`의 기능을 삭제하지 않는다.
 
 ---
 
-# 3. Step 5 — 아직 없음
+# 3. Step 5 — DONE (UI) / REMAINING (저장)
 
-현재 `src/features`에는 `my-seoa`만 확인된다.
+## DONE
 
-즉 다음은 아직 구현되지 않았다.
-
-## Project Request
-
-필요:
-
-- `/studio/request`
-- Project Type
-- Current Status
-- Goal
-- Target User
-- Features
-- Description
-- Timeline
-- Budget
-- References
-- Contact
-- Summary
-
-이번 단계에서는 local UI state만.
-
-## Leads
-
-필요:
-
+- `/studio/request` 11단계 UI, local state
+- 제출은 Contact handoff. DB 저장 없음
 - `src/features/leads/`
-- Admin `/admin/leads`
-- Admin Lead Detail
-- Qualification UI
-- Recommended Path
-- Internal Notes
-- CTA shell
+- `/admin/leads`, Lead Detail
+- Qualification, Recommended Path, Internal Notes, Create Proposal 이동
 
-상태 예:
+상태: NEW, CONTACTED, CONSULTATION, PROPOSAL, WON, LOST. 화면만.
 
-- NEW
-- CONTACTED
-- CONSULTATION
-- PROPOSAL
-- WON
-- LOST
+## REMAINING
 
-DB 생성 금지.
+- Lead 저장
+- Project Request Description 등 필수 입력 범위 최종 결정
+- Project Request sessionStorage handoff의 stale data cleanup
 
 ---
 
-# 4. Step 6 — Proposal / Contract는 대부분 아직 없음
+# 4. Step 6 — DONE (UI) / REMAINING (저장·결제·연결)
 
-MY SEOA에 Proposal empty shell은 있지만
-실제 Proposal/Contract 업무 UI는 아직 없다.
+## DONE
 
-필요:
+- `/admin/proposals` 목록, 작성, 상세, 편집, Preview
+- 고객 `/my/proposals` 검토: Approve, Request Revision, Reject. 저장 없음
+- `/admin/contracts`, `/my/contracts/:id`
+- Version 표시, Agreement UI, Deposit Required UI
+- 전자서명과 결제 연결 없음
 
-## Admin Proposal
+## REMAINING
 
-- `/admin/proposals`
-- new
-- detail
-- edit
-- preview
-
-Proposal sections:
-
-- Project Summary
-- Goal
-- Scope
-- Out of Scope
-- Deliverables
-- Timeline
-- Price Breakdown
-- Payment Schedule
-- Revision Policy
-- Support
-- Validity
-
-## Customer Proposal
-
-- Approve
-- Request Revision
-- Reject
-
-UI state only.
-
-## Contract
-
-필요:
-
-- Admin Contract list/detail
-- Customer Contract detail
-- version display
-- agreement UI
-- Deposit Required UI
-
-실제 전자서명/결제 연결은 금지.
+- Proposal / Contract 저장
+- Admin Proposal의 Draft → Preview → Send UI shell 보완
+- Proposal Approved → Admin Contract 준비/생성 UI 연결
+- Modal full focus trap 보완
+- 전자서명, PortOne, Engagement 자동 생성
 
 ---
 
-# 5. Step 7 — Engagement / Intake 전체 미구현
+# 5. Step 7 — DONE (UI / domain skeleton) / REMAINING (저장)
 
-새 고객 프로젝트 도메인은 아직 없다.
+## DONE
 
-향후 설계/구현:
+- `src/features/engagements/`, `src/features/intake/`
+- Admin `/admin/engagements`, `/admin/engagements/:id` (라벨은 Projects)
+- 고객 `/my/projects`, `/my/projects/:id`에 Engagement mapper 연결. 메뉴명은 Projects
+- Intake는 Engagement Detail 탭. 별도 route 없음
+- 고객 단계: 준비, 기획, 디자인, 제작, 검토, 완료
+- Admin status는 mapper로만 고객 단계가 된다
+- Milestone, Review, Files, Messages, Change Request, Activity, Payments는 화면과 타입만
+- 운영 빌드는 빈 목록. DEV fixture만 예시 데이터
+- Legacy `public.projects`는 사용하지 않음. `engagements` 테이블은 만들지 않음
 
-- `engagements`
-- milestones
-- files
-- messages
-- change requests
-- activities
-- intake
+## REMAINING
 
-고객 표시 단계:
-
-- 준비
-- 기획
-- 디자인
-- 제작
-- 검토
-- 완료
-
-Admin 상세 상태는 고객 상태보다 더 세분화한다.
-
-### 중요
-
-Legacy `public.projects` 재사용 금지.
+- Engagement, Intake, Milestone, Review, File, Message, Change Request, Activity, Payment 저장
+- Storage, 실제 업로드, 실시간 메시지, 승인 저장, 결제 연결
+- READY_TO_START 자동 전이
+- Step 6에서 넘어온 누락:
+  - Admin Proposal의 Draft → Preview → Send UI shell 보완
+  - Proposal Approved → Admin Contract 준비/생성 UI 연결
+  - Project Request sessionStorage handoff의 stale data cleanup
+  - Modal full focus trap 보완
+  - Project Request Description 등 필수 입력 범위 최종 결정
 
 ---
 

@@ -8,6 +8,7 @@ export function AdminFrame() {
   const leadsActive = pathname === '/admin/leads' || pathname.startsWith('/admin/leads/')
   const proposalsActive = pathname === '/admin/proposals' || pathname.startsWith('/admin/proposals/')
   const contractsActive = pathname === '/admin/contracts' || pathname.startsWith('/admin/contracts/')
+  const projectsActive = pathname === '/admin/engagements' || pathname.startsWith('/admin/engagements/')
 
   const logout = async () => {
     await signOut()
@@ -33,6 +34,9 @@ export function AdminFrame() {
             </Link>
             <Link to="/admin/contracts" aria-current={contractsActive ? 'page' : undefined} className={contractsActive ? 'font-medium text-ink' : 'text-ink-soft hover:text-ink'}>
               Contracts
+            </Link>
+            <Link to="/admin/engagements" aria-current={projectsActive ? 'page' : undefined} className={projectsActive ? 'font-medium text-ink' : 'text-ink-soft hover:text-ink'}>
+              Projects
             </Link>
           </nav>
           <button type="button" onClick={() => void logout()} className="text-sm text-ink-soft hover:text-ink">

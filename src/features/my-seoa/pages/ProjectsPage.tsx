@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { usePageTitle } from '../../../components/marketing/usePageTitle'
+import { toCustomerProject } from '../../engagements/mappers'
+import { useEngagementSource } from '../../engagements/useEngagementSource'
 import { EmptyState } from '../components/EmptyState'
 import { FilterTabs } from '../components/FilterTabs'
 import { PageHeader } from '../components/SectionHeader'
-import { portalData } from '../portalData'
 import type { ProjectTab } from '../types'
 
 const tabs: { id: ProjectTab; label: string }[] = [
@@ -23,16 +24,20 @@ const emptyCopy: Record<ProjectTab, string> = {
 
 export function ProjectsPage() {
   usePageTitle('Projects — MY SEOA')
+  const { engagements, ready } = useEngagementSource()
   const [tab, setTab] = useState<ProjectTab>('active')
-  const rows = portalData.projects.filter((project) => project.status === tab)
+  const rows = engagements.map(toCustomerProject).filter((project) => project.status === tab)
 
   return (
     <div className="mx-auto max-w-5xl">
       <PageHeader title="Projects" description="Studio에서 진행하는 프로젝트입니다." />
+      {import.meta.env.DEV ? <p className="mb-4 text-xs text-ink-faint">개발 환경 예시입니다. 저장되지 않습니다.</p> : null}
       <FilterTabs value={tab} options={tabs} onChange={setTab} />
-      {rows.length === 0 ? (
+      {!ready ? <p className="text-sm text-ink-faint">로딩 중...</p> : null}
+      {ready && rows.length === 0 ? (
         <EmptyState title={emptyCopy[tab]} action={tab === 'active' ? { to: '/studio/request', label: '새 프로젝트 의뢰' } : undefined} />
-      ) : (
+      ) : null}
+      {ready && rows.length > 0 ? (
         <ul className="divide-y divide-line border-t border-line">
           {rows.map((project) => (
             <li key={project.id} className="py-5">
@@ -45,7 +50,7 @@ export function ProjectsPage() {
             </li>
           ))}
         </ul>
-      )}
+      ) : null}
     </div>
   )
 }

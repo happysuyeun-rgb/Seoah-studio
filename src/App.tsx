@@ -61,6 +61,8 @@ import { AdminProposalListPage } from './features/proposals/pages/AdminProposalL
 import { AdminContractDetailPage } from './features/contracts/pages/AdminContractDetailPage'
 import { AdminContractListPage } from './features/contracts/pages/AdminContractListPage'
 import { CustomerContractPage } from './features/contracts/pages/CustomerContractPage'
+import { AdminEngagementDetailPage } from './features/engagements/pages/AdminEngagementDetailPage'
+import { AdminEngagementListPage } from './features/engagements/pages/AdminEngagementListPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -228,6 +230,8 @@ function AppRoutes() {
           <Route path="proposals/:id/edit" element={<AdminProposalEditorPage />} />
           <Route path="contracts" element={<AdminContractListPage />} />
           <Route path="contracts/:id" element={<AdminContractDetailPage />} />
+          <Route path="engagements" element={<AdminEngagementListPage />} />
+          <Route path="engagements/:id" element={<AdminEngagementDetailPage />} />
         </Route>
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

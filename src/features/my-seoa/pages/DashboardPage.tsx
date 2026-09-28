@@ -6,6 +6,9 @@ import { EmptyState } from '../components/EmptyState'
 import { ProgressTimeline } from '../components/ProgressTimeline'
 import { SectionHeader } from '../components/SectionHeader'
 import { SummaryMetric } from '../components/SummaryMetric'
+import { ActionRequiredPanel } from '../../engagements/components/ActionRequiredPanel'
+import { toCustomerProject } from '../../engagements/mappers'
+import { useEngagementSource } from '../../engagements/useEngagementSource'
 import { portalData } from '../portalData'
 
 function displayName(name: unknown) {
@@ -17,7 +20,10 @@ export function DashboardPage() {
   usePageTitle('MY SEOA — SEOAH.STUDIO')
   const user = useAuthStore((state) => state.user)
   const name = displayName(user?.user_metadata?.name)
-  const current = portalData.projects.find((project) => project.status === 'active') ?? null
+  const { engagements } = useEngagementSource()
+  const projects = engagements.map(toCustomerProject)
+  const current = projects.find((project) => project.status === 'active') ?? null
+  const actions = engagements.flatMap((engagement) => (engagement.actionRequired ? [{ id: engagement.id, action: engagement.actionRequired, name: engagement.name }] : []))
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -27,8 +33,8 @@ export function DashboardPage() {
       </header>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryMetric label="Active Projects" value={String(portalData.projects.filter((project) => project.status === 'active').length)} />
-        <SummaryMetric label="Action Required" value={String(portalData.actions.length)} />
+        <SummaryMetric label="Active Projects" value={String(projects.filter((project) => project.status === 'active').length)} />
+        <SummaryMetric label="Action Required" value={String(actions.length)} />
         <SummaryMetric label="Purchases" value={String(portalData.purchases.length)} />
         <SummaryMetric label="Next Payment" value="없음" />
       </section>
@@ -52,13 +58,14 @@ export function DashboardPage() {
 
       <section className="mt-12">
         <SectionHeader title="Action Required" />
-        {portalData.actions.length === 0 ? (
+        {actions.length === 0 ? (
           <EmptyState title="지금 확인할 작업이 없습니다." />
         ) : (
-          <ul className="divide-y divide-line border-t border-line">
-            {portalData.actions.map((action) => (
-              <li key={action.id} className="py-4 text-sm text-ink">
-                {action.title}
+          <ul>
+            {actions.map((item) => (
+              <li key={item.id}>
+                <p className="text-sm text-ink-faint">{item.name}</p>
+                <ActionRequiredPanel action={item.action} />
               </li>
             ))}
           </ul>
