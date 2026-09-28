@@ -10,7 +10,7 @@ Legacy는 템플릿 판매다. New Studio는 의뢰와 제작이다.
 
 `public.projects`는 템플릿 세션이다. `engagements`와 외래 키로 연결하지 않는다.
 
-`orders.project_id`는 계속 필수다. Studio 결제는 `engagement_payments`다.
+`orders.project_id`는 계속 필수다. Studio 계약금, 중도금, 잔금은 `studio_payments`다. `engagement_payments`는 최종 MVP 스키마에서 쓰지 않는다. `orders`와 `studio_payments`는 연결하지 않는다.
 
 ## 신원
 
@@ -41,7 +41,7 @@ OAuth 직후 `created_at`이 15분 이내인지를 보는 분기는 최종 구�
 
 Lead의 목표, 대상, 기능은 `text[]`다. 참고 링크는 `{url, note}[]`라서 `jsonb`다.
 
-고객이 보면 안 되는 문장은 같은 행의 JSON에 넣지 않는다. 행 단위 RLS로 숨길 수 없기 때문이다. 내부 평가는 `lead_assessments`로 분리한다. Proposal 내부 메모는 `proposal_versions`의 공개 `content`와 분리된 `internal_notes`를 관리자 전용 뷰 또는 별도 행 정책으로 막는다. 구현 시 고객 역할에는 `internal_notes` 컬럼 SELECT를 주지 않는다.
+고객이 보면 안 되는 문장은 같은 행의 JSON이나 고객이 SELECT하는 행에 넣지 않는다. RLS는 행 단위라서 한 행의 일부 컬럼만 숨길 수 없다. 내부 평가는 `lead_assessments`, 제안 내부 메모는 `proposal_internal_notes`, 계약 동의의 IP는 `contract_agreements`, 차단 사유는 `engagement_admin_state`에 둔다.
 
 ## 삭제와 보존
 
@@ -49,7 +49,7 @@ Lead의 목표, 대상, 기능은 `text[]`다. 참고 링크는 `{url, note}[]`�
 |------|------|
 | contracts, contract_versions | 유지. 상태만 변경 |
 | proposals, proposal_versions | 유지. 버전 삭제 없음 |
-| engagement_payments, orders, refund_requests | 유지 |
+| studio_payments, orders, refund_requests | 유지. 서로 연결하지 않음 |
 | engagement_activities | 추가만 |
 | engagements | 취소 상태. 물리 삭제는 하지 않음 |
 | projects | 기존처럼 `deleted_at` |
@@ -80,9 +80,13 @@ Storage 버킷 `project-uploads`, `project-outputs`, `thumbnails`는 SQL에 생�
 - lead_assessments
 - proposals
 - proposal_versions
+- proposal_internal_notes
 - contracts
 - contract_versions
+- contract_agreements
+- studio_payments
 - engagements
+- engagement_admin_state
 - engagement_milestones
 - engagement_reviews
 - intakes
@@ -91,7 +95,6 @@ Storage 버킷 `project-uploads`, `project-outputs`, `thumbnails`는 SQL에 생�
 - engagement_messages
 - engagement_change_requests
 - engagement_activities
-- engagement_payments
 
 ### Group C — 나중
 
@@ -120,9 +123,11 @@ id, user_id nullable, name, email, phone, company, account_type, project_type, c
 
 `proposals`: id, lead_id, user_id nullable, status, current_version, valid_until, created_at, updated_at.
 
-`proposal_versions`: id, proposal_id, version, content jsonb, internal_notes text, subtotal integer, vat integer, total integer, created_at.
+`proposal_versions`: id, proposal_id, version, content jsonb, subtotal integer, vat integer, total integer, created_at.
 
-`content`에는 summary, goals, scope, out_of_scope, deliverables, timeline, line_items, payment_schedule, revision, support가 들어간다. `internal_notes`는 content 밖에 둔다.
+`content`에는 고객에게 보여도 되는 summary, goals, scope, out_of_scope, deliverables, timeline, line_items, payment_schedule, revision, support만 넣는다. `internal_notes` 컬럼은 이 테이블에 두지 않는다.
+
+`proposal_internal_notes`: id, proposal_id, proposal_version_id nullable, note, created_by nullable, created_at, updated_at. 고객 SELECT는 없다. Admin은 SELECT, INSERT, UPDATE다.
 
 상태: `DRAFT`, `SENT`, `VIEWED`, `REVISION_REQUESTED`, `APPROVED`, `REJECTED`, `EXPIRED`.
 
@@ -134,21 +139,34 @@ id, user_id nullable, name, email, phone, company, account_type, project_type, c
 
 `contract_versions`: id, contract_id, version, content jsonb, created_at.
 
-동의 기록은 `contracts`에 둔다. agreed_by, agreed_at, agreed_ip, agreed_version. 전자서명 구현은 없다.
+`contracts`에는 `agreed_ip`를 두지 않는다. 동의 감사는 `contract_agreements`다. id, contract_id, contract_version_id, agreed_by, agreed_at, agreed_ip nullable, created_at. 고객은 이 테이블을 SELECT하지 않는다. 화면의 동의 여부와 시각은 나중에 안전한 조회가 IP 없이 넘긴다. 전자서명은 아니다.
 
 상태: `DRAFT`, `SENT`, `VIEWED`, `AGREED`, `DECLINED`, `EXPIRED`.
 
 ## Engagement 생성
 
-조건은 Proposal `APPROVED`, Contract `AGREED`, 해당 계약의 Deposit `PAID`다.
+조건은 Proposal `APPROVED`, Contract `AGREED`, 그 계약의 `studio_payments` 중 `type = DEPOSIT`이고 `status = PAID`인 행이다. Deposit은 Engagement보다 먼저 `contract_id`만으로 존재한다.
 
-데이터베이스 CHECK 한 줄로는 세 테이블을 막기 어렵다. 클라이언트 INSERT도 허용하지 않는다.
+데이터베이스 CHECK 한 줄로는 세 조건을 막기 어렵다. 클라이언트 INSERT도 허용하지 않는다.
 
-최종 Integration에서는 서비스 롤이 한 트랜잭션으로 호출하는 함수가 조건을 확인하고, 그 계약에 Engagement가 없을 때만 행을 만든다. 함수 이름 후보는 `create_engagement_from_contract`. 이번 Step에서는 만들지 않는다.
+최종 Integration에서는 서비스 롤 함수 `create_engagement_from_contract`가 한 트랜잭션에서 다음을 한다. 함수 SQL은 아직 만들지 않는다.
+
+1. Proposal `APPROVED` 확인
+2. Contract `AGREED` 확인
+3. 해당 계약의 DEPOSIT `PAID` 확인
+4. 그 계약의 Engagement가 이미 없는지 확인
+5. Engagement INSERT
+6. 그 Deposit 행의 `engagement_id`를 새 Engagement로 연결
+
+이렇게 만들어지는 Engagement의 정상 시작 상태는 `WAITING_CONTENT`다. Intake가 이미 있고 필수 항목이 모두 `APPROVED`이면, 이후 서비스 로직이 `READY_TO_START`로 바꿀 수 있다. 그 전이 때도 Contract와 Deposit을 다시 확인해도 된다.
+
+`DRAFT`, `AWAITING_CONTRACT`, `AWAITING_DEPOSIT`는 타입에서 지우지 않는다. 새 데이터베이스에서 이 함수로 만드는 Engagement의 정상 시작 상태로는 쓰지 않는다. 현재 UI 호환과 이후 흐름을 위한 상태다.
 
 ## Engagement
 
-id, user_id, lead_id, proposal_id, contract_id, name, project_type, status, progress_stage, progress integer, started_at, expected_completion, action_kind nullable, action_due_date nullable, blocked_reason nullable, current_milestone_id nullable, created_at, updated_at.
+id, user_id, lead_id, proposal_id, contract_id, name, project_type, status, progress_stage, progress integer, started_at, expected_completion, action_kind nullable, action_due_date nullable, current_milestone_id nullable, created_at, updated_at.
+
+`blocked_reason`과 내부 메모는 `engagements`에 두지 않는다. `engagement_admin_state`는 engagement_id가 기본 키이고, blocked_reason nullable, internal_notes nullable, updated_at을 둔다. 고객 SELECT는 없다. Admin은 SELECT, INSERT, UPDATE다.
 
 관리자 상태는 코드의 16개와 같다. `DRAFT`부터 `CANCELLED`까지.
 
@@ -174,7 +192,9 @@ id, user_id, lead_id, proposal_id, contract_id, name, project_type, status, prog
 
 항목 상태: `NOT_STARTED`, `UPLOADED`, `UNDER_REVIEW`, `NEEDS_REVISION`, `APPROVED`, `OPTIONAL`.
 
-Ready to Start는 계약 동의, 계약금 지급, Intake 행이 있을 것, 그리고 필수 항목이 모두 `APPROVED`일 것이다. 필수 항목이 0개면 마지막 조건은 참이다. Intake 행이 없으면 거짓이다.
+현재 UI helper `meetsReadyToStart`는 계약 동의, 계약금 지급, Intake 존재, 필수 항목 전부 `APPROVED`를 함께 본다. 필수 항목이 0개면 그 조건은 참이고, Intake가 없으면 거짓이다.
+
+데이터베이스에서 Engagement는 이미 그 세 관문을 통과한 뒤에 생긴다. 그래서 Engagement 안의 `READY_TO_START` 전이는 Intake가 있고 필수 항목이 모두 `APPROVED`인지를 중심으로 한다. 필수 항목 0개의 뜻은 helper와 같다. 서비스 함수는 방어적으로 Contract와 Deposit을 다시 확인할 수 있다. helper의 세 관문 검사와, 이미 생성된 Engagement의 상태 전이는 같은 함수가 아니다.
 
 비밀 값 입력란은 없다.
 
@@ -212,13 +232,17 @@ audience는 `customer` 또는 `admin`. 버킷은 나중에 `engagement-files`. �
 
 ## Studio Payment
 
-`engagement_payments`: id, engagement_id, type, amount integer, due_date, paid_at, status, payment_reference, created_at.
+테이블 이름은 `studio_payments`다. `engagement_payments`는 쓰지 않는다.
+
+id, contract_id, engagement_id nullable, type, amount integer, due_date nullable, paid_at nullable, status, payment_reference nullable, created_at, updated_at.
 
 type: `DEPOSIT`, `INTERIM`, `FINAL`.
 
 status: `PENDING`, `PAID`, `FAILED`, `OVERDUE`, `REFUNDED`, `PARTIAL_REFUND`, `CANCELLED`.
 
-`orders`와 합치지 않는다. PortOne 연동은 나중이다.
+`DEPOSIT`은 Engagement가 생기기 전에 `contract_id`만으로 있을 수 있다. Engagement 생성 후 그 행의 `engagement_id`를 채울 수 있다. `INTERIM`과 `FINAL`은 Engagement가 생긴 뒤 `engagement_id`를 쓴다.
+
+`orders`와 연결하지 않는다. PortOne 연동은 나중이다. 고객은 자신의 Contract 또는 Engagement에 연결된 공개 결제 정보만 SELECT한다. Admin은 SELECT, UPDATE다. 결제 상태 변경은 서비스 롤이다.
 
 ## Support와 Product
 
@@ -237,9 +261,14 @@ erDiagram
   leads ||--o| lead_assessments : admin_only
   leads ||--o{ proposals : lead_id
   proposals ||--|{ proposal_versions : version
+  proposals ||--o{ proposal_internal_notes : admin_only
   proposals ||--o{ contracts : proposal_id
   contracts ||--|{ contract_versions : version
+  contracts ||--o{ contract_agreements : audit
+  contracts ||--o{ studio_payments : before_engagement
   contracts ||--o| engagements : after_three_gates
+  engagements ||--o{ studio_payments : nullable_link
+  engagements ||--|| engagement_admin_state : admin_only
   engagements ||--|{ engagement_milestones : has
   engagements ||--|{ engagement_reviews : has
   engagements ||--o| intakes : has
@@ -248,7 +277,6 @@ erDiagram
   engagements ||--|{ engagement_messages : has
   engagements ||--|{ engagement_change_requests : has
   engagements ||--|{ engagement_activities : has
-  engagements ||--|{ engagement_payments : has
 
   templates ||--o{ projects : template_id
   users ||--o{ projects : customization_session
@@ -257,14 +285,16 @@ erDiagram
   orders ||--o{ refund_requests : order_id
 ```
 
-Studio 쪽과 Legacy 쪽은 사용자 계정만 공유한다. `projects`와 `engagements`는 연결하지 않는다.
+Studio 쪽과 Legacy 쪽은 사용자 계정만 공유한다. `projects`와 `engagements`는 연결하지 않는다. `orders`와 `studio_payments`도 연결하지 않는다.
 
 ## 고객에게 숨기는 것
 
 RLS로 막을 대상이다. 화면 mapper만으로 충분하지 않다.
 
 - lead_assessments 전체
-- proposal version internal_notes
+- proposal_internal_notes 전체
+- contract_agreements 전체. 동의 여부와 시각만 안전한 조회로 제공
+- engagement_admin_state 전체
 - is_internal 메시지
 - audience admin 파일과 활동
 - audience admin 이거나 상태가 DRAFT, UNDER_REVIEW인 변경 요청
@@ -288,10 +318,13 @@ RLS로 막을 대상이다. 화면 mapper만으로 충분하지 않다.
 | refund_requests | - | - | S I 본인 | S U | U 처리 |
 | leads | - | - | S 본인. I는 서버 | S U | I guest request |
 | lead_assessments | - | - | - | S U | U |
-| proposals, versions | - | - | S 공개 필드, Draft 제외 | S U | I U |
-| contracts, versions | - | - | S 본인, Draft 제외 | S U | I U 동의 기록 |
+| proposals, versions | - | - | S 공개 content, Draft 제외 | S U | I U |
+| proposal_internal_notes | - | - | - | S I U | 필요 시 전부 |
+| contracts, versions | - | - | S 본인, Draft 제외. IP 없음 | S U | I U |
+| contract_agreements | - | - | - | S | I |
+| studio_payments | - | - | S 자기 Contract 또는 Engagement의 공개 결제 | S U | 결제 처리 |
 | engagements와 자식 | - | - | S 고객 공개 행만 | S U | I 생성 함수 |
-| engagement_payments | - | - | S 본인 | S U | U 결제 |
+| engagement_admin_state | - | - | - | S I U | U |
 | Group C | 없음 | 없음 | 없음 | 없음 | 아직 테이블 없음 |
 
 소유자의 Engagement SELECT 조건은 자식 테이블마다 다르다. 메시지, 파일, 활동, 변경 요청은 위의 고객 공개 조건을 정책에 넣는다.
@@ -302,8 +335,8 @@ RLS로 막을 대상이다. 화면 mapper만으로 충분하지 않다.
 
 1. Legacy baseline. `001`–`020`을 빈 데이터베이스에 순서대로 재사용한다.
 2. Account 보완. `users.updated_at`처럼 빈칸만 additive로 추가한다.
-3. Studio 영업. leads, assessments, proposals, contracts.
-4. Studio 제작. engagements와 자식, intake, payments.
+3. Studio 영업. leads, assessments, proposals, proposal_internal_notes, contracts, contract_agreements, studio_payments.
+4. Studio 제작. engagements, engagement_admin_state, 자식, intake. Deposit의 engagement_id 연결은 생성 함수가 한다.
 5. RLS.
 6. Storage 버킷과 정책. Commerce 버킷 3개와 `engagement-files`.
 7. Edge Functions.

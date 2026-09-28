@@ -33,7 +33,7 @@ public schema가 비어 있으므로, 이 대상에는 Legacy Commerce 테이블
 | Commerce 버킷 3개가 SQL에 없음 | 나중에 버킷 생성 migration. 003은 수정하지 않음 |
 | `inquiries.status`에 CHECK 없음. 코드는 `pending`, `replied`, Contact의 `new`를 함께 씀 | 020을 유지. 상태를 하나로 합치지 않음 |
 | OAuth 15분 `created_at` 추정 | 코드 제안만. 이번 Step에서 수정하지 않음 |
-| Studio 테이블 없음 | Group B는 021 이후. 아직 파일 없음 |
+| Studio 테이블 없음 | Group B는 021 이후. 결제 테이블 이름은 `studio_payments`. `engagement_payments`는 쓰지 않음. 아직 파일 없음 |
 
 ## 020
 

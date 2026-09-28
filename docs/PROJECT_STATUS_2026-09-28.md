@@ -9,6 +9,7 @@
 - Step 5–8 UI Skeleton. 저장은 없다.
 - 공식 Supabase 대상 기록: SEOAH.STUDIO, `qzvxypynlluqpdpmsstu`, ap-northeast-2.
 - Step 9 도메인 결정과 흐름 감사. Canonical 문서 5개.
+- Step 9.1 문서 수정. `studio_payments`, `proposal_internal_notes`, `contract_agreements`, `engagement_admin_state`. SQL은 없음.
 
 ## 공식 데이터베이스
 

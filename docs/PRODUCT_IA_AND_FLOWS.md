@@ -30,15 +30,17 @@ Proposal은 보내기 전까지 Draft다. 고객 승인 상태가 `APPROVED`다.
 
 Contract 동의는 체크, 이름, 시각의 기록이다. 이번 모델은 그 기록을 담을 자리만 정하고, 전자서명은 만들지 않는다.
 
+계약금은 `studio_payments`에 계약 기준으로 먼저 기록된다. Engagement가 있어야 계약금을 저장하는 구조는 쓰지 않는다.
+
 Engagement는 아래 셋이 모두 끝난 뒤에만 생긴다.
 
 - Proposal `APPROVED`
 - Contract `AGREED`
-- Deposit `PAID`
+- 그 계약의 DEPOSIT `PAID`
 
-하나라도 없으면 Engagement 행을 만들지 않는다. 화면에서 미리 보여 주는 준비 상태와, 행이 존재하는 상태를 구분한다.
+하나라도 없으면 Engagement 행을 만들지 않는다. 생성된 Engagement의 정상 시작 상태는 `WAITING_CONTENT`다. `DRAFT`, `AWAITING_CONTRACT`, `AWAITING_DEPOSIT`는 현재 화면 타입에 남아 있지만, 이 생성 경로의 시작 상태로는 쓰지 않는다.
 
-Intake가 없으면 Ready to Start를 만족한 것으로 보지 않는다. Intake는 있는데 필수 항목이 0개면, 필수 승인 조건은 충족이다. 이 계산은 `meetsReadyToStart`와 같다.
+현재 화면 helper는 계약, 계약금, Intake를 한 번에 본다. 데이터베이스에서 Engagement가 생긴 뒤의 `READY_TO_START`는 Intake가 있고 필수 항목이 모두 승인됐는지를 중심으로 한다. 필수 항목이 0개면 그 조건은 충족이고, Intake 자체가 없으면 충족이 아니다.
 
 고객 진행 단계는 준비, 기획, 디자인, 제작, 검토, 완료다. 일시중지와 취소는 단계가 아니다. 그 경우 마지막으로 저장한 `progress_stage`를 유지한다.
 

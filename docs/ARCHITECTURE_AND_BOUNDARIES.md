@@ -15,7 +15,7 @@ SEOAH.STUDIO는 한 앱 안에 두 도메인을 둔다.
 
 `public.projects`는 템플릿 커스터마이징 세션이다. Studio 고객 프로젝트로 쓰지 않는다. Studio 프로젝트의 이름은 `engagements`다.
 
-`orders`는 Commerce 결제다. Studio 계약금, 중도금, 잔금은 `engagement_payments`다. 한 테이블로 합치지 않는다.
+`orders`는 Commerce 결제다. Studio 계약금, 중도금, 잔금은 `studio_payments`다. 계약금은 Engagement보다 먼저 계약에 붙을 수 있다. 두 결제는 연결하지 않는다. `engagement_payments`라는 이름은 쓰지 않는다.
 
 ## 신원
 
