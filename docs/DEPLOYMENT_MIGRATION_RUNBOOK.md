@@ -11,7 +11,7 @@
 | Region | ap-northeast-2 |
 | public schema | EMPTY |
 | supabase link | 하지 않음 |
-| migration | 저장소 `001`–`027`, 원격 적용 없음 |
+| migration | 저장소 `001`–`028`, 원격 적용 없음 |
 | Edge Function | 배포 없음 |
 | Storage | 없음 |
 | Vercel production env | 바꾸지 않음 |
@@ -104,7 +104,7 @@ REPLACE와 DO NOT APPLY는 없다. 순서를 건너뛰거나 파일 내용을 �
 
 이 기능은 Studio 테이블이 없어도 동작해야 한다. Studio 외래 키를 `projects`나 `orders`에 붙이면 안 된다.
 
-## 021–027 초안
+## 021–028 초안
 
 저장소에 다음 파일이 있다. 이 파일들이 있어도 원격 적용은 아직 금지다.
 
@@ -115,6 +115,7 @@ REPLACE와 DO NOT APPLY는 없다. 순서를 건너뛰거나 파일 내용을 �
 - `025_storage_bootstrap.sql`
 - `026_studio_service_functions.sql`
 - `027_legacy_data_api_grants.sql`
+- `028_legacy_admin_rls.sql`
 
 `027`은 2026-05-30 이후 신규 Supabase 프로젝트에서 public 테이블이 Data API에 자동 노출되지 않는 기본값을 보완한다. 권한은 기존 RLS와 현재 클라이언트 호출에 맞춘다.
 
@@ -123,9 +124,32 @@ REPLACE와 DO NOT APPLY는 없다. 순서를 건너뛰거나 파일 내용을 �
 - `service_role`: 위 Legacy 테이블 ALL, `templates_public` SELECT
 - `templates` 직접 권한은 `anon`과 `authenticated`에 주지 않는다
 
-FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면에 호출이 없다. 002·004·006의 관리자 RLS가 그 권한을 전제로 하므로 초안에서는 유지한다. `024`는 정책이 없는 Studio 권한을 뺐다. `contract_agreements`는 SELECT, `studio_payments`는 SELECT/UPDATE, `engagement_activities`는 SELECT/INSERT만 `authenticated`에 준다.
+FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면에 호출이 없다. 002·004·006의 관리자 RLS가 그 권한을 전제로 하므로 초안에서는 유지한다. `024`는 정책이 없는 Studio 권한을 뺐다. `contract_agreements`는 SELECT, `studio_payments`는 SELECT/UPDATE, `engagement_activities`는 SELECT/INSERT만 `authenticated`에 준다. `engagements`는 SELECT/UPDATE만 준다.
+
+`028`은 `public.is_admin()`을 재사용해 관리자 SELECT를 추가한다. 대상은 `users`, 삭제되지 않은 `projects`, `orders`다. `inquiries`, `chatbot_inquiries`, `refund_requests`의 관리자 SELECT는 006·007·017에 이미 있다. 새 GRANT는 없다.
 
 적용 전 Dashboard의 Data API 설정과 Security Advisor 결과를 다시 확인한다. 이 초안은 격리 실행으로 검증하지 않았다.
+
+## Data API 계약
+
+코드 호출, GRANT, RLS가 같은 작업을 가리킨다. `templates` 직접 SELECT는 `anon`과 `authenticated`에 없다. `html_template`은 프로젝트 소유자 RPC 또는 관리자 RPC로만 읽는다.
+
+| 화면 또는 함수 | 대상 | 역할 | 작업 | RLS 또는 함수 조건 | 직접 접근 |
+| --- | --- | --- | --- | --- | --- |
+| TemplateGalleryPage, TemplateDetailPage | `templates_public` | anon, authenticated | SELECT | view가 `is_active`만 노출 | `templates` 금지 |
+| UploadPage | `templates_public` | authenticated | SELECT | 같은 view. 컬럼은 id, name, category, thumbnail_url | `templates` 금지 |
+| MyPage, PreviewPage | `projects` 후 `templates_public` | authenticated | SELECT | `projects_select_own`. 템플릿 이름과 썸네일만 view | embed `templates` 금지 |
+| CustomizePage | `get_project_template_html` | authenticated | EXECUTE | 본인 프로젝트의 `html_template`만 | 임의 template id 금지 |
+| AdminPage 템플릿 | `admin_list_templates`, `admin_upsert_template_v2`, `admin_set_template_active` | admin | EXECUTE | 함수 안에서 `is_admin` | `templates` 직접 금지 |
+| ai-customize | `templates` | service_role | SELECT | Edge Function. 브라우저 권한 아님 | 고객 직접 금지 |
+| AdminPage 사용자 | `users` | admin | SELECT | `users_select_own`, `028` `users_select_admin` | |
+| AdminPage 프로젝트 수 | `projects` | admin | SELECT `user_id` | `028` `projects_select_admin`, `deleted_at` 없음 | |
+| AdminPage 주문 | `orders`, embed `users.email` | admin | SELECT | `028` `orders_select_admin`, `users_select_admin` | |
+| AdminPage 문의 | `inquiries` | admin | SELECT, UPDATE | `inquiries_select_admin`, `inquiries_update_admin` | |
+| AdminPage 챗봇 | `chatbot_inquiries` | admin | SELECT | `chatbot_inquiries_select_admin` | INSERT 금지 |
+| AdminPage 환불 | `refund_requests`, embed `orders`, `users` | admin | SELECT | `refund_requests_select_admin`와 `028`의 orders/users SELECT | UPDATE는 service_role |
+| 고객 본인 | `users`, `projects`, `orders`, `downloads` | authenticated | 본인 SELECT/UPDATE 또는 INSERT | `*_own` 정책. `orders` INSERT 없음 | |
+| Engagement 생성 | `create_engagement_from_contract` | service_role | EXECUTE | APPROVED, AGREED, DEPOSIT PAID | authenticated INSERT 금지 |
 
 `supabase db push`, `supabase migration up`, `supabase db reset`, SQL Editor 실행을 하지 않는다.
 
@@ -152,9 +176,10 @@ FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면
 5. Commerce 버킷 세 개를 만드는 추가 migration을 적용한다.
 6. Group B Studio migration `021`–`026`을 적용한다.
 7. Legacy Data API 명시 권한 `027`을 적용한다.
-8. 역할별 RLS와 Data API 접근을 검증한다.
-9. Edge Function을 배포한다.
-10. Legacy 구매 경로와 Studio 빈 화면을 확인한다.
-11. 그때만 production env 전환을 별도로 결정한다.
+8. 관리자 전체 조회 정책 `028`을 적용한다.
+9. 역할별 RLS와 Data API 접근을 검증한다.
+10. Edge Function을 배포한다.
+11. Legacy 구매 경로와 Studio 빈 화면을 확인한다.
+12. 그때만 production env 전환을 별도로 결정한다.
 
 4번부터는 이 문서의 초안이다. 승인 없이 실행하지 않는다.

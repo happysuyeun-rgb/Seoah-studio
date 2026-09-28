@@ -148,7 +148,7 @@ id, user_id nullable, name, email, phone, company, account_type, project_type, c
 
 조건은 Proposal `APPROVED`, Contract `AGREED`, 그 계약의 `studio_payments` 중 `type = DEPOSIT`이고 `status = PAID`인 행이다. Deposit은 Engagement보다 먼저 `contract_id`만으로 존재한다. 계약당 Deposit 행은 하나만 허용하고, 상태 변경으로 결제 생명주기를 기록한다.
 
-데이터베이스 CHECK 한 줄로는 세 조건을 막기 어렵다. 고객 클라이언트 INSERT는 허용하지 않는다. `024`에는 관리자 INSERT 정책 `engagements_admin_insert`가 남아 있다. 이 정책은 세 관문과 `create_engagement_from_contract`를 거치지 않는다. Step 10.2에서는 이 정책을 지우거나 유지하는 결정을 하지 않았다.
+데이터베이스 CHECK 한 줄로는 세 조건을 막기 어렵다. 고객과 관리자 모두 `engagements`에 직접 INSERT하지 않는다. `024`에는 `engagements_admin_insert`가 없다. `authenticated`에는 SELECT와 UPDATE만 있다. 생성은 `service_role`의 `create_engagement_from_contract`만 한다. 이후 Admin UI는 인증된 Edge Function이 관리자 권한을 확인한 뒤 service_role로 그 함수를 호출한다. 이번 단계에서는 Edge Function을 만들지 않는다.
 
 `026_studio_service_functions.sql`의 서비스 롤 함수 `create_engagement_from_contract` 초안은 한 트랜잭션에서 다음을 한다. 파일은 저장소에만 있고 아직 적용하지 않았다.
 
@@ -347,7 +347,8 @@ RLS로 막을 대상이다. 화면 mapper만으로 충분하지 않다.
 6. `025`: Commerce 버킷 3개와 `engagement-files` 버킷.
 7. `026`: `create_engagement_from_contract` 서비스 함수.
 8. `027`: 신규 Supabase 프로젝트용 Legacy Data API 명시 권한.
-9. Edge Functions, 관리자 계정과 필요한 시드.
-10. 런타임 연결과 기존 사이트 env 전환. 별도 지시 전 하지 않는다.
+9. `028`: Legacy 관리자 SELECT. `users`, 삭제되지 않은 `projects`, `orders`.
+10. Edge Functions, 관리자 계정과 필요한 시드.
+11. 런타임 연결과 기존 사이트 env 전환. 별도 지시 전 하지 않는다.
 
 `003`은 정책만 있고 Commerce 버킷 생성은 없다. 그래서 6번이 필요하다. `003` 파일은 고치지 않는다.

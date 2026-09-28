@@ -51,7 +51,7 @@ export function UploadPage() {
     queryFn: async () => {
       if (!selectedTemplateId) return null
       const { data, error } = await supabase
-        .from('templates')
+        .from('templates_public')
         .select('id, name, category, thumbnail_url')
         .eq('id', selectedTemplateId)
         .single()

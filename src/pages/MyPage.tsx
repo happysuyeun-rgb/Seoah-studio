@@ -35,12 +35,28 @@ export function MyPage() {
       if (!user?.id) return []
       const { data, error } = await supabase
         .from('projects')
-        .select('*, templates(name, thumbnail_url)')
+        .select('*')
         .eq('user_id', user.id)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
       if (error) throw error
-      return data ?? []
+      const rows = data ?? []
+      const templateIds = [...new Set(rows.map((row) => row.template_id).filter((id): id is string => Boolean(id)))]
+      const names = new Map<string, { name: string; thumbnail_url: string | null }>()
+      if (templateIds.length > 0) {
+        const { data: templates, error: templateError } = await supabase
+          .from('templates_public')
+          .select('id, name, thumbnail_url')
+          .in('id', templateIds)
+        if (templateError) throw templateError
+        for (const template of templates ?? []) {
+          names.set(template.id, { name: template.name, thumbnail_url: template.thumbnail_url })
+        }
+      }
+      return rows.map((row) => ({
+        ...row,
+        templates: names.get(row.template_id) ?? null,
+      }))
     },
     enabled: !!user?.id,
   })

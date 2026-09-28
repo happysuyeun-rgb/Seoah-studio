@@ -306,9 +306,6 @@ CREATE POLICY studio_payments_admin_update ON public.studio_payments
 CREATE POLICY engagements_admin_select ON public.engagements
   FOR SELECT TO authenticated
   USING ((SELECT public.is_admin()));
-CREATE POLICY engagements_admin_insert ON public.engagements
-  FOR INSERT TO authenticated
-  WITH CHECK ((SELECT public.is_admin()));
 CREATE POLICY engagements_admin_update ON public.engagements
   FOR UPDATE TO authenticated
   USING ((SELECT public.is_admin()))
@@ -421,6 +418,7 @@ CREATE POLICY engagement_activities_admin_insert ON public.engagement_activities
   WITH CHECK ((SELECT public.is_admin()));
 
 -- Table grants follow the policies above. DELETE is not granted.
+-- engagements: no authenticated INSERT. Creation is create_engagement_from_contract.
 -- contract_agreements: admin SELECT only. Inserts stay on service_role.
 -- studio_payments: no authenticated INSERT. Updates are admin-only by policy.
 -- engagement_activities: no authenticated UPDATE.
@@ -456,7 +454,6 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
   public.proposal_internal_notes,
   public.contracts,
   public.contract_versions,
-  public.engagements,
   public.engagement_admin_state,
   public.engagement_milestones,
   public.engagement_reviews,
@@ -468,6 +465,7 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
   public.engagement_change_requests
 TO authenticated;
 
+GRANT SELECT, UPDATE ON TABLE public.engagements TO authenticated;
 GRANT SELECT ON TABLE public.contract_agreements TO authenticated;
 GRANT SELECT, UPDATE ON TABLE public.studio_payments TO authenticated;
 GRANT SELECT, INSERT ON TABLE public.engagement_activities TO authenticated;

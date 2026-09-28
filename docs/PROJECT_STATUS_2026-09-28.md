@@ -1,6 +1,6 @@
 # SEOAH.STUDIO 프로젝트 상태 — 2026-09-28
 
-기준 코드: Step 10.2 검수. Step 9는 설계만 기록했고, DB 적용은 하지 않았다. 최종 갱신일: 2026-09-29.
+기준 코드: Step 10.3 검수. Step 9는 설계만 기록했고, DB 적용은 하지 않았다. 최종 갱신일: 2026-09-29.
 
 과거 이력은 `PROJECT_STATUS_2026-03-17.md`에 남아 있다. 그 파일은 지우지 않는다.
 
@@ -12,6 +12,7 @@
 - Step 9.1 문서 수정. `studio_payments`, `proposal_internal_notes`, `contract_agreements`, `engagement_admin_state`.
 - Step 10 SQL 초안 `021`–`026`과 적용 전 보안 보완 `027`. 저장소에만 있고 원격에는 적용하지 않음.
 - Step 10.2 정적 검수. `024`에서 정책이 없는 Studio 테이블 권한을 줄임. 격리 DB 실행은 하지 않음.
+- Step 10.3. Engagement 관리자 INSERT 제거. Legacy 관리자 SELECT 정책 초안 `028`. 고객 템플릿 조회는 `templates_public`과 `get_project_template_html`. 원격 적용 없음.
 
 ## 공식 데이터베이스
 
@@ -19,12 +20,12 @@
 |------|------|
 | public schema | EMPTY |
 | link | 없음 |
-| migration | 파일 `001`–`027`은 저장소에 있음. 원격 적용 없음 |
+| migration | 파일 `001`–`028`은 저장소에 있음. 원격 적용 없음 |
 | Edge Function | 없음 |
 | Storage | 없음 |
 | production env | 변경 없음 |
 
-`001`–`020`은 나중에 Legacy baseline으로 재사용할 수 있다. `021`–`026`은 Studio 초안이고, `027`은 2026-05-30 이후 신규 Supabase 프로젝트에 필요한 Legacy Data API 명시 권한이다. 020은 KEEP다. 아무것도 적용하지 않는다.
+`001`–`020`은 나중에 Legacy baseline으로 재사용할 수 있다. `021`–`026`은 Studio 초안이고, `027`은 Legacy Data API 명시 권한, `028`은 관리자 전체 조회 SELECT 정책이다. 020은 KEEP다. 아무것도 적용하지 않는다.
 
 ## 다음
 

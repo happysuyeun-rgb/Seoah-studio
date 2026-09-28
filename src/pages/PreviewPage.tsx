@@ -40,11 +40,25 @@ export function PreviewPage() {
       if (!currentProjectId) return null
       const { data, error } = await supabase
         .from('projects')
-        .select('output_html, custom_params, templates(name)')
+        .select('output_html, custom_params, template_id')
         .eq('id', currentProjectId)
         .single()
       if (error) throw error
-      return data as unknown as { output_html: string | null; custom_params: Record<string, unknown> | null; templates?: { name: string }[] | { name: string } | null }
+      let templateName: string | null = null
+      if (data.template_id) {
+        const { data: template, error: templateError } = await supabase
+          .from('templates_public')
+          .select('name')
+          .eq('id', data.template_id)
+          .maybeSingle()
+        if (templateError) throw templateError
+        templateName = template?.name ?? null
+      }
+      return {
+        output_html: data.output_html,
+        custom_params: data.custom_params,
+        templates: templateName ? { name: templateName } : null,
+      }
     },
     enabled: !!currentProjectId,
   })
