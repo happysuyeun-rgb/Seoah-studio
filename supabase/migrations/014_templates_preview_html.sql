@@ -11,9 +11,9 @@ SELECT
   thumbnail_url,
   variables,
   tags,
-  preview_html,
   is_active,
-  created_at
+  created_at,
+  preview_html
 FROM public.templates
 WHERE is_active = true;
 

@@ -130,7 +130,9 @@ FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면
 
 적용 전 Dashboard의 Data API 설정과 Security Advisor 결과를 다시 확인한다.
 
-2026-09-29에 이 PC의 Docker Desktop `4.93.0`과 Supabase CLI `2.118.0`로 임시 Postgres `17.6`에만 시험했다. 공식 프로젝트는 사용하지 않았다. CLI `db reset`은 `003`에서 `storage.objects` 소유권 오류로 멈춘다. 로컬 슈퍼유저 적용은 `014`의 `templates_public` 컬럼 순서에서 멈춘다. 그 뷰만 로컬에서 컬럼을 뒤에 붙이면 `015`–`028`과 생성 규칙 검사는 통과한다. 저장소의 `014`는 아직 그대로다.
+2026-09-29에 이 PC의 Docker Desktop `4.93.0`과 Supabase CLI `2.118.0`로 임시 Postgres `17.6`에만 시험했다. 공식 프로젝트는 사용하지 않았다.
+
+`storage.objects`의 소유자는 `supabase_storage_admin`이고, Storage 초기화 시점에 RLS는 이미 켜져 있다. migration 역할 `postgres`는 소유자가 아니라 `ALTER TABLE storage.objects`만 실패하고, POLICY 생성과 삭제는 된다. 그래서 `003`에서 그 `ALTER`를 뺐다. `014`는 `preview_html`을 뷰의 마지막 컬럼으로 둔다. 이후 `db reset`은 `001`–`028`을 한 번에 적용한다. 규칙 검사 20개와 `anon` Data API 확인도 통과했다.
 
 ## Data API 계약
 

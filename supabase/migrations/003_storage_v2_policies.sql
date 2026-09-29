@@ -3,8 +3,8 @@
 -- project-outputs: service_role만 업로드 (읽기는 signed URL로만)
 -- thumbnails: 관리자 업로드, 공개 읽기
 
--- storage.objects에 RLS 활성화 (이미 되어 있을 수 있음)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- storage.objects RLS is already enabled by Supabase storage initialization.
+-- The migration role does not own the table, so do not ALTER it here.
 
 -- project-uploads: 본인 폴더만 (경로 첫 세그먼트 = user_id)
 DROP POLICY IF EXISTS "project_uploads_insert_own" ON storage.objects;
