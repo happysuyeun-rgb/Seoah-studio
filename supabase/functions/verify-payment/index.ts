@@ -1,5 +1,7 @@
 // Supabase Edge Function: 결제 검증 (PortOne REST API 연동 시 imp_uid로 검증, v2.1 traceId)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { assessPayment, isUniqueViolation } from './payment.ts'
+import { resolvePlan } from './plans.ts'
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
 type ApiError = { code: string; message: string; detail?: unknown }
@@ -19,8 +21,13 @@ Deno.serve(async (req) => {
     } catch {
       return jsonResponse({ success: false, error: { code: 'INVALID_JSON', message: 'Invalid request body' } }, 400, traceId)
     }
-    const { imp_uid, merchant_uid, amount, projectId, planType } = body
-    if (!imp_uid || !projectId) return jsonResponse({ success: false, error: { code: 'MISSING_PARAMS', message: 'imp_uid, projectId required' } }, 400, traceId)
+    const { imp_uid, merchant_uid, projectId, planType } = body
+    if (!imp_uid || !merchant_uid || !projectId) return jsonResponse({ success: false, error: { code: 'MISSING_PARAMS', message: 'imp_uid, merchant_uid, projectId required' } }, 400, traceId)
+    const plan = resolvePlan(planType)
+    if (!plan.ok) {
+      const message = plan.code === 'PLAN_NOT_AVAILABLE' ? '현재 판매하지 않는 플랜입니다.' : '결제 플랜이 올바르지 않습니다.'
+      return jsonResponse({ success: false, error: { code: plan.code, message } }, plan.status, traceId)
+    }
 
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) return jsonResponse({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authorization required' } }, 401, traceId)
@@ -42,46 +49,66 @@ Deno.serve(async (req) => {
     const { data: existingOrder } = await supabase.from('orders').select('id').eq('project_id', projectId).eq('user_id', user.id).eq('status', 'paid').maybeSingle()
     if (existingOrder) return jsonResponse({ success: false, error: { code: 'ALREADY_PAID', message: '이미 결제가 완료된 주문입니다.' } }, 409, traceId)
 
-    // PortOne(아임포트) REST API로 imp_uid 검증 및 금액 일치 확인
     const impKey = Deno.env.get('PORTONE_IMP_KEY') ?? Deno.env.get('IMP_KEY')
     const impSecret = Deno.env.get('PORTONE_IMP_SECRET') ?? Deno.env.get('IMP_SECRET')
+    const hasCredentials = Boolean(impKey && impSecret)
+    if (!hasCredentials) {
+      return jsonResponse({ success: false, error: { code: 'PAYMENT_NOT_CONFIGURED', message: '결제 검증 설정이 없습니다.' } }, 503, traceId)
+    }
+
+    let tokenOk = false
+    let lookupOk = false
+    let paymentStatus: string | undefined
+    let paidAmount: number | undefined
     let payMethod: string | null = null
-    if (impKey && impSecret) {
+    try {
       const tokenRes = await fetch('https://api.iamport.kr/users/getToken', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imp_key: impKey, imp_secret: impSecret }),
       })
-      const tokenData = (await tokenRes.json()) as { response?: { access_token?: string }; code?: number }
+      const tokenData = (await tokenRes.json()) as { response?: { access_token?: string } }
       const accessToken = tokenData.response?.access_token
-      if (!accessToken) {
-        console.error('verify-payment PortOne token failed')
-        return jsonResponse({ success: false, error: { code: 'PAYMENT_SERVICE_ERROR', message: '결제 서비스 인증에 실패했습니다.' } }, 502, traceId)
+      tokenOk = Boolean(accessToken)
+      if (accessToken) {
+        const payRes = await fetch(`https://api.iamport.kr/payments/${encodeURIComponent(imp_uid)}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        const payData = (await payRes.json()) as { response?: { status?: string; amount?: number; pay_method?: string }; code?: number }
+        lookupOk = payData.code === 0 && Boolean(payData.response)
+        paymentStatus = payData.response?.status
+        paidAmount = payData.response?.amount == null ? undefined : Number(payData.response.amount)
+        payMethod = payData.response?.pay_method ?? null
       }
-      const payRes = await fetch(`https://api.iamport.kr/payments/${imp_uid}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
-      const payData = (await payRes.json()) as { response?: { status?: string; amount?: number; pay_method?: string }; code?: number }
-      const payment = payData.response
-      if (payData.code !== 0 || !payment) {
-        return jsonResponse({ success: false, error: { code: 'PAYMENT_INVALID', message: '결제 정보를 찾을 수 없거나 유효하지 않습니다.' } }, 400, traceId)
-      }
-      if (payment.status !== 'paid') {
-        return jsonResponse({ success: false, error: { code: 'PAYMENT_NOT_COMPLETED', message: '결제가 완료되지 않았습니다.' } }, 402, traceId)
-      }
-      const paidAmount = Number(payment.amount)
-      if (Number.isNaN(paidAmount) || paidAmount !== amount) {
-        console.error('verify-payment AMOUNT_MISMATCH', { paidAmount, amount })
-        return jsonResponse({ success: false, error: { code: 'AMOUNT_MISMATCH', message: '결제 금액이 일치하지 않습니다. 환불이 필요할 수 있습니다.' }, detail: { paidAmount, amount } }, 402, traceId)
-      }
-      payMethod = payment?.pay_method ?? null
+    } catch (e) {
+      console.error('verify-payment PortOne', e)
+      tokenOk = false
+    }
+
+    const payment = assessPayment({
+      hasCredentials,
+      tokenOk,
+      lookupOk,
+      paymentStatus,
+      paidAmount,
+      expectedAmount: plan.amount,
+    })
+    if (!payment.ok) {
+      const message = payment.code === 'AMOUNT_MISMATCH'
+        ? '결제 금액이 일치하지 않습니다. 환불이 필요할 수 있습니다.'
+        : payment.code === 'PAYMENT_SERVICE_ERROR'
+          ? '결제 서비스 인증에 실패했습니다.'
+          : payment.code === 'PAYMENT_NOT_COMPLETED'
+            ? '결제가 완료되지 않았습니다.'
+            : '결제 정보를 찾을 수 없거나 유효하지 않습니다.'
+      return jsonResponse({ success: false, error: { code: payment.code, message } }, payment.status, traceId)
     }
 
     const { data: order, error: orderErr } = await supabase.from('orders').insert({
       user_id: user.id,
       project_id: projectId,
-      plan_type: planType,
-      amount,
+      plan_type: plan.planType,
+      amount: plan.amount,
       imp_uid,
       payment_key: merchant_uid,
       status: 'paid',
@@ -89,8 +116,11 @@ Deno.serve(async (req) => {
     }).select('id').single()
 
     if (orderErr) {
-      console.error('verify-payment order insert', orderErr)
-      return jsonResponse({ success: false, error: { code: 'ORDER_FAILED', message: orderErr.message } }, 500, traceId)
+      console.error('verify-payment order insert', orderErr.code)
+      if (isUniqueViolation(orderErr.code)) {
+        return jsonResponse({ success: false, error: { code: 'PAYMENT_ALREADY_PROCESSED', message: '이미 처리된 결제입니다.' } }, 409, traceId)
+      }
+      return jsonResponse({ success: false, error: { code: 'ORDER_FAILED', message: '주문 저장에 실패했습니다.' } }, 500, traceId)
     }
 
     await supabase.from('projects').update({ status: 'paid' }).eq('id', projectId)
@@ -124,18 +154,16 @@ Deno.serve(async (req) => {
     }
 
     const { data: userRow } = await supabase.from('users').select('email, name').eq('id', user.id).single()
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    if (userRow?.email && supabaseUrl && serviceKey) {
+    if (userRow?.email && supabaseUrl && serviceRoleKey) {
       try {
         await fetch(`${supabaseUrl}/functions/v1/send-email`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceKey}` },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${serviceRoleKey}` },
           body: JSON.stringify({
             to: userRow.email,
             userName: userRow.name || user.user_metadata?.name || '고객',
             projectId,
-            planType,
+            planType: plan.planType,
             downloadUrl,
           }),
         })

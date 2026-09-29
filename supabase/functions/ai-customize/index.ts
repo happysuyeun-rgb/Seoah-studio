@@ -1,6 +1,7 @@
 // Supabase Edge Function: AI 커스터마이징 (Claude API + 파일 파싱 + 60초 타임아웃, v2.1 상태기계)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import JSZip from 'https://esm.sh/jszip'
+import { decodeUtf8, fileExtension, selectUploadPaths, textFromDocxDocumentXml, textFromPptxSlideXml } from './files.ts'
 import sanitizeHtml from 'https://esm.sh/sanitize-html@2'
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
@@ -45,47 +46,26 @@ const FONT_HINT_TO_URL: Record<string, string> = {
 
 type Extracted = Record<string, string>
 
-async function fetchTextFromUrl(url: string): Promise<string | null> {
+async function textFromDocxBytes(bytes: Uint8Array): Promise<string | null> {
   try {
-    const res = await fetch(url, { redirect: 'follow' })
-    if (!res.ok) return null
-    return await res.text()
-  } catch {
-    return null
-  }
-}
-
-function stripXmlToText(xml: string): string {
-  return xml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-}
-
-async function extractTextFromDocx(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url, { redirect: 'follow' })
-    if (!res.ok) return null
-    const buf = await res.arrayBuffer()
-    const zip = await JSZip.loadAsync(buf)
+    const zip = await JSZip.loadAsync(bytes)
     const docXml = await zip.file('word/document.xml')?.async('string')
-    if (!docXml) return null
-    return stripXmlToText(docXml)
+    return textFromDocxDocumentXml(docXml)
   } catch {
     return null
   }
 }
 
-async function extractTextFromPptx(url: string): Promise<string | null> {
+async function textFromPptxBytes(bytes: Uint8Array): Promise<string | null> {
   try {
-    const res = await fetch(url, { redirect: 'follow' })
-    if (!res.ok) return null
-    const buf = await res.arrayBuffer()
-    const zip = await JSZip.loadAsync(buf)
+    const zip = await JSZip.loadAsync(bytes)
     const slideNames = Object.keys(zip.files).filter((n) => n.startsWith('ppt/slides/slide') && n.endsWith('.xml')).sort()
-    let out = ''
+    const slides: string[] = []
     for (const name of slideNames) {
       const xml = await zip.file(name)?.async('string')
-      if (xml) out += stripXmlToText(xml) + '\n'
+      if (xml) slides.push(xml)
     }
-    return out.trim() || null
+    return textFromPptxSlideXml(slides)
   } catch {
     return null
   }
@@ -206,6 +186,12 @@ Deno.serve(async (req) => {
     if (projectErr || !project) return jsonResponse({ success: false, error: { code: 'NOT_FOUND', message: 'Project not found' } }, 404, traceId)
     if (project.user_id !== user.id) return jsonResponse({ success: false, error: { code: 'FORBIDDEN', message: 'Access denied' } }, 403, traceId)
 
+    const input = (project.input_data as { textInput?: string; filePaths?: string[]; fileUrls?: string[] }) ?? {}
+    const selected = selectUploadPaths(input, user.id, project.id)
+    if (!selected.ok) {
+      return jsonResponse({ success: false, error: { code: 'FORBIDDEN_PATH', message: '업로드 경로가 올바르지 않습니다.' } }, 403, traceId)
+    }
+
     const { error: parsingErr } = await supabase.from('projects').update({ status: 'parsing' }).eq('id', projectId)
     if (parsingErr) {
       console.error('ai-customize set parsing failed', parsingErr)
@@ -218,32 +204,32 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: { code: 'TEMPLATE_INVALID', message: 'Template not found' } }, 422, traceId)
     }
 
-    const input = (project.input_data as { textInput?: string; fileUrls?: string[] }) ?? {}
-    const fileUrls = input.fileUrls ?? []
     const textInput = (input.textInput ?? '').trim()
 
     let rawText = ''
-    const textExtensions = ['.txt', '.md']
-    for (const url of fileUrls) {
-      const lower = url.toLowerCase()
-      if (lower.endsWith('.docx')) {
-        const text = await extractTextFromDocx(url)
+    for (const path of selected.paths) {
+      const ext = fileExtension(path)
+      const { data: file, error: downloadErr } = await supabase.storage.from('project-uploads').download(path)
+      if (downloadErr || !file) continue
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      if (ext === '.txt' || ext === '.md') {
+        const text = decodeUtf8(bytes).trim()
         if (text) rawText += text + '\n\n'
         continue
       }
-      if (lower.endsWith('.pptx')) {
-        const text = await extractTextFromPptx(url)
+      if (ext === '.docx') {
+        const text = await textFromDocxBytes(bytes)
         if (text) rawText += text + '\n\n'
         continue
       }
-      if (textExtensions.some((ext) => lower.endsWith(ext))) {
-        const text = await fetchTextFromUrl(url)
+      if (ext === '.pptx') {
+        const text = await textFromPptxBytes(bytes)
         if (text) rawText += text + '\n\n'
       }
     }
     if (textInput) rawText += textInput
 
-    if (rawText.length === 0 && fileUrls.length > 0) {
+    if (rawText.length === 0 && selected.paths.length > 0) {
       await supabase.from('projects').update({ status: 'error' }).eq('id', projectId)
       return jsonResponse(
         { success: false, error: { code: 'PARSE_FAILED', message: '파일을 읽을 수 없습니다. 텍스트를 직접 입력해 주세요.' }, processingMs: Date.now() - startMs },

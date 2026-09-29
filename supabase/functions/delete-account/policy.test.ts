@@ -90,8 +90,8 @@ VALUES ('${ids.template}', 'p3a1', 'test', '<p>x</p>');
 
 INSERT INTO public.projects (id, user_id, template_id, input_data)
 VALUES ('${ids.project}', '${ids.legacy}', '${ids.template}', '{"name":"Legacy"}'::jsonb);
-INSERT INTO public.orders (id, user_id, project_id, amount, status)
-VALUES ('${ids.order}', '${ids.legacy}', '${ids.project}', 10000, 'paid');
+INSERT INTO public.orders (id, user_id, project_id, amount, status, imp_uid, payment_key)
+VALUES ('${ids.order}', '${ids.legacy}', '${ids.project}', 10000, 'paid', 'imp-legacy', 'pay-legacy');
 INSERT INTO public.downloads (id, order_id, file_type)
 VALUES ('${ids.download}', '${ids.order}', 'html');
 INSERT INTO public.inquiries (user_id, subject, body, name, email, phone, ip)
@@ -101,15 +101,15 @@ VALUES ('${ids.legacy}', 'terms', '2026-09');
 
 INSERT INTO public.projects (id, user_id, template_id)
 VALUES ('${ids.refundProject}', '${ids.refund}', '${ids.template}');
-INSERT INTO public.orders (id, user_id, project_id, amount, status)
-VALUES ('${ids.refundOrder}', '${ids.refund}', '${ids.refundProject}', 5000, 'refund_requested');
+INSERT INTO public.orders (id, user_id, project_id, amount, status, imp_uid, payment_key)
+VALUES ('${ids.refundOrder}', '${ids.refund}', '${ids.refundProject}', 5000, 'refund_requested', 'imp-refund', 'pay-refund');
 INSERT INTO public.refund_requests (id, order_id, user_id, reason, status, reviewed_by)
 VALUES ('${ids.refundRequest}', '${ids.refundOrder}', '${ids.refund}', 'need refund', 'requested', '${ids.refund}');
 
 INSERT INTO public.projects (id, user_id, template_id)
 VALUES ('${ids.otherProject}', '${ids.other}', '${ids.template}');
-INSERT INTO public.orders (id, user_id, project_id, amount, status)
-VALUES ('${ids.otherOrder}', '${ids.other}', '${ids.otherProject}', 7000, 'paid');
+INSERT INTO public.orders (id, user_id, project_id, amount, status, imp_uid, payment_key)
+VALUES ('${ids.otherOrder}', '${ids.other}', '${ids.otherProject}', 7000, 'paid', 'imp-other', 'pay-other');
 INSERT INTO public.refund_requests (id, order_id, user_id, reason, reviewed_by)
 VALUES ('${ids.otherRefund}', '${ids.otherOrder}', '${ids.other}', 'other refund', '${ids.refund}');
 INSERT INTO public.leads (id, user_id, name, email, phone)

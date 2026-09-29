@@ -20,13 +20,13 @@ interface ProjectState {
   selectedTemplateId: string | null
   currentProjectId: string | null
   uploadedFiles: File[]
-  uploadedFileUrls: string[]
+  uploadedFilePaths: string[]
   textInput: string
   customResult: CustomResult | null
   setSelectedTemplateId: (id: string | null) => void
   setCurrentProjectId: (id: string | null) => void
   setUploadedFiles: (files: File[]) => void
-  setUploadedFileUrls: (urls: string[]) => void
+  setUploadedFilePaths: (paths: string[]) => void
   setTextInput: (text: string) => void
   setCustomResult: (result: CustomResult | null) => void
   reset: () => void
@@ -46,7 +46,7 @@ const initialState = {
   selectedTemplateId: null,
   currentProjectId: null,
   uploadedFiles: [],
-  uploadedFileUrls: [],
+  uploadedFilePaths: [],
   textInput: '',
   customResult: null,
 }
@@ -62,7 +62,7 @@ export const useProjectStore = create<ProjectState>((set) => ({
     set({ currentProjectId: id })
   },
   setUploadedFiles: (files) => set({ uploadedFiles: files }),
-  setUploadedFileUrls: (urls) => set({ uploadedFileUrls: urls }),
+  setUploadedFilePaths: (paths) => set({ uploadedFilePaths: paths }),
   setTextInput: (text) => set({ textInput: text }),
   setCustomResult: (result) => set({ customResult: result }),
   reset: () => set(initialState),

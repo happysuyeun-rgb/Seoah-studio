@@ -33,7 +33,7 @@ export function UploadPage() {
   const {
     selectedTemplateId,
     setCurrentProjectId,
-    setUploadedFileUrls,
+    setUploadedFilePaths,
     setTextInput,
     uploadedFiles,
     setUploadedFiles,
@@ -118,26 +118,37 @@ export function UploadPage() {
         })
         .select('id')
         .single()
-      if (insertErr) throw insertErr
+      if (insertErr || !project?.id) throw insertErr ?? new Error('프로젝트를 만들지 못했습니다.')
+      const projectId = project.id
 
-      let fileUrls: string[] = []
-      if (uploadedFiles.length > 0 && project?.id) {
-        const bucket = 'project-uploads'
-        const pathPrefix = `${user.id}/${project.id}`
-        for (const file of uploadedFiles) {
-          const path = `${pathPrefix}/${file.name}`
-          const { error: uploadErr } = await supabase.storage.from(bucket).upload(path, file, { upsert: true })
-          if (uploadErr) throw uploadErr
-          const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(path)
-          fileUrls.push(urlData.publicUrl)
+      const filePaths: string[] = []
+      try {
+        if (uploadedFiles.length > 0) {
+          const pathPrefix = `${user.id}/${projectId}`
+          for (const file of uploadedFiles) {
+            const safeName = file.name.split(/[/\\]/).pop() || 'file'
+            if (safeName === '.' || safeName === '..') throw new Error('파일 이름이 올바르지 않습니다.')
+            const path = `${pathPrefix}/${safeName}`
+            const { error: uploadErr } = await supabase.storage.from('project-uploads').upload(path, file, { upsert: true })
+            if (uploadErr) throw uploadErr
+            filePaths.push(path)
+          }
+          const { error: updateErr } = await supabase
+            .from('projects')
+            .update({ input_data: { textInput: textInput.trim(), filePaths } })
+            .eq('id', projectId)
+            .eq('user_id', user.id)
+          if (updateErr) throw updateErr
         }
-        await supabase
-          .from('projects')
-          .update({ input_data: { textInput: textInput.trim(), fileUrls } })
-          .eq('id', project.id)
+      } catch (uploadErr) {
+        if (filePaths.length > 0) {
+          await supabase.storage.from('project-uploads').remove(filePaths)
+        }
+        await supabase.from('projects').update({ deleted_at: new Date().toISOString() }).eq('id', projectId).eq('user_id', user.id)
+        throw uploadErr
       }
-      setUploadedFileUrls(fileUrls)
-      setCurrentProjectId(project.id)
+      setUploadedFilePaths(filePaths)
+      setCurrentProjectId(projectId)
       navigate('/project/customize')
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '업로드 실패'
@@ -226,7 +237,7 @@ export function UploadPage() {
                         <div className="flex items-start gap-2 bg-amber-50 border-t border-amber-200 px-3 py-2 text-xs text-amber-900">
                           <span className="shrink-0" aria-hidden>⚠</span>
                           <span>
-                            PPT·Word 파일은 텍스트 자동 추출을 지원하지 않습니다. 주요 내용을 &apos;직접 입력&apos; 탭에 복사해서 붙여넣어 주세요.
+                            PPT·Word 파일은 텍스트를 추출합니다. 빠지는 내용이 있으면 &apos;직접 입력&apos; 탭에 보완해 주세요.
                           </span>
                         </div>
                       )}
@@ -274,8 +285,13 @@ export function UploadPage() {
                       </tr>
                       <tr className="border-b border-gray-100">
                         <td className="py-2 pr-4 text-gray-600">제한</td>
-                        <td className="py-2 font-mono text-gray-900">.pptx .docx .jpg .png .pdf</td>
-                        <td className="py-2 text-gray-600">업로드 가능하나 직접 입력 병행 권장</td>
+                        <td className="py-2 font-mono text-gray-900">.pptx .docx</td>
+                        <td className="py-2 text-gray-600">텍스트 추출. 직접 입력 병행 권장</td>
+                      </tr>
+                      <tr className="border-b border-gray-100">
+                        <td className="py-2 pr-4 text-gray-600">미지원</td>
+                        <td className="py-2 font-mono text-gray-900">.jpg .png .pdf</td>
+                        <td className="py-2 text-gray-600">내용 자동 인식 없음. 직접 입력 필요</td>
                       </tr>
                     </tbody>
                   </table>

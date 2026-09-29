@@ -1,5 +1,6 @@
 // Edge Function: 환불 요청 제출 [v2.2]
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { isOwnedRefundAttachment } from './attachment.ts'
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
 type ApiError = { code: string; message: string; detail?: unknown }
@@ -51,6 +52,9 @@ Deno.serve(async (req) => {
 
     const { data: existing } = await supabase.from('refund_requests').select('id').eq('order_id', orderId).maybeSingle()
     if (existing) return jsonResponse({ success: false, error: { code: 'DUPLICATE_REQUEST', message: '이미 환불 요청이 접수되었습니다.' } }, 409, traceId)
+    if (!isOwnedRefundAttachment(attachmentPath, user.id, orderId)) {
+      return jsonResponse({ success: false, error: { code: 'INVALID_ATTACHMENT', message: '첨부 경로가 올바르지 않습니다.' } }, 400, traceId)
+    }
 
     const { error: insertErr } = await supabase.from('refund_requests').insert({
       order_id: orderId,

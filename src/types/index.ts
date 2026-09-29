@@ -28,7 +28,7 @@ export interface Project {
   user_id: string
   template_id: string
   status: 'draft' | 'parsing' | 'ready' | 'pending_payment' | 'paid' | 'fulfilled' | 'error'
-  input_data: { fileUrls?: string[]; textInput?: string } | null
+  input_data: { filePaths?: string[]; textInput?: string } | null
   output_html: string | null
   custom_params: Record<string, unknown> | null
   deleted_at: string | null
