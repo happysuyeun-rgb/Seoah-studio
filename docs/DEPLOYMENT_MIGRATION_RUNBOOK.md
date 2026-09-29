@@ -1,6 +1,6 @@
 # Deployment and Migration Runbook
 
-이 문서는 나중에 실행할 순서를 적어 둔 것이다. 지금 실행하지 않는다.
+공식 스키마는 2026-09-29에 적용됐다. Edge Function과 production env는 아직 바꾸지 않는다.
 
 ## 공식 대상
 
@@ -9,15 +9,15 @@
 | 이름 | SEOAH.STUDIO |
 | Project Ref | `qzvxypynlluqpdpmsstu` |
 | Region | ap-northeast-2 |
-| public schema | EMPTY |
-| supabase link | 하지 않음 |
-| migration | 저장소 `001`–`028`, 원격 적용 없음 |
+| public schema | bootstrap 완료. `001`–`029` |
+| supabase link | `qzvxypynlluqpdpmsstu` |
+| migration | 원격 history `001`–`029` |
 | Edge Function | 배포 없음 |
-| Storage | 없음 |
+| Storage | bucket 5개. `thumbnails`만 public |
 | Vercel production env | 바꾸지 않음 |
 | 기존 사이트 Supabase env | 바꾸지 않음 |
 
-public schema가 비어 있으므로, 이 대상에는 Legacy Commerce 테이블도 없다. 신규 Studio 테이블만 추가하면 현재 코드의 템플릿 구매가 동작하지 않는다.
+공식 public schema에는 Legacy Commerce 테이블과 Studio 테이블이 함께 있다. 앱 런타임은 아직 이 프로젝트를 보지 않는다.
 
 ## 001–020을 빈 데이터베이스에 쓸 수 있는가
 
@@ -204,6 +204,21 @@ SECURITY DEFINER 함수의 최종 `search_path`는 `public` 또는 빈 문자열
 | `create_engagement_from_contract` | `anon`과 `authenticated`는 EXECUTE 불가. `service_role`만 가능 |
 
 검증에 쓴 사용자, 템플릿, project, order는 롤백했다. 남은 `auth.users`는 0이다. `005` FAQ 시드는 migration에 포함되어 있다. Edge Function은 배포하지 않았다. Vercel env와 production 런타임은 바꾸지 않았다.
+
+## 2026-09-29 P2.1 권한 축소
+
+`029_security_hardening.sql`만 추가했다. `001`–`028`은 수정하지 않았다. 로컬 fresh reset `001`–`029` 뒤에 공식 `qzvxypynlluqpdpmsstu`에 `029`만 push했다. history는 29개다.
+
+`templates_public`은 security definer 뷰로 둔다. 대안 B(`security_invoker`와 `templates` 안전 컬럼 SELECT)는 로컬 Data API에서 `templates?select=name,preview_html`을 `anon`에게 허용했다. `html_template`은 막혔지만, 직접 테이블 조회를 금지한 계약이 깨진다. A는 뷰 SELECT만 남기고 INSERT/UPDATE/DELETE를 거부했다. `html_template` 직접 조회도 거부했다. A를 적용했다. Advisor `security_definer_view` ERROR는 이 때문에 의도적으로 남는다.
+
+함수 EXECUTE:
+
+- `admin_*`, `get_project_template_html`: PUBLIC과 anon 제거. `authenticated`와 `service_role` 유지. 일반 사용자는 `forbidden`, 관리자만 성공.
+- `is_admin`: PUBLIC과 anon 제거. `authenticated` 유지.
+- `handle_new_user`, `users_protect_is_admin`: PUBLIC, anon, authenticated 제거. `supabase_auth_admin` 가입 insert는 `public.users`를 만들고, 본인 UPDATE는 이름은 바뀌고 `is_admin`은 그대로다.
+- `create_engagement_from_contract`: `service_role`만 EXECUTE.
+
+Performance Advisor는 backlog다. unindexed foreign keys 12, `auth_rls_initplan` 27, multiple permissive policies 30, unused indexes 47. 이번 migration에서 고치지 않았다.
 
 ## 아직 하지 않음
 
