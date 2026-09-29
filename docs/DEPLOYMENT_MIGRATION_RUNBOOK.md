@@ -155,7 +155,7 @@ FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면
 | 고객 본인 | `users`, `projects`, `orders`, `downloads` | authenticated | 본인 SELECT/UPDATE 또는 INSERT | `*_own` 정책. `orders` INSERT 없음 | |
 | Engagement 생성 | `create_engagement_from_contract` | service_role | EXECUTE | APPROVED, AGREED, DEPOSIT PAID | authenticated INSERT 금지 |
 
-`supabase db push`와 공식 프로젝트 SQL Editor 실행은 하지 않는다. 2026-09-29 로컬 시험은 위 기록대로 임시 Docker에서만 했다.
+2026-09-29 로컬 시험은 위 기록대로 임시 Docker에서만 했다. 공식 적용 결과는 아래 bootstrap 절에 있다.
 
 ## 2026-09-29 공식 Preflight
 
@@ -184,36 +184,33 @@ SECURITY DEFINER 함수의 최종 `search_path`는 `public` 또는 빈 문자열
 
 적용이 성공해도 Vercel production env는 바로 바꾸지 않는다. 순서는 DB 적용, DB 검증, Storage/Edge/Auth, staging 또는 로컬 클라이언트 확인, Legacy Commerce regression, Studio persistence, 그 다음 production env 결정이다.
 
-적용 뒤 확인할 것:
+## 2026-09-29 공식 bootstrap
 
-- 테이블, 뷰, 함수, FK, CHECK, trigger, RLS, policy, grant, bucket
-- 규칙 20개. Engagement INSERT 거부, 잘못된 proposal/contract version 거부, milestone 교차 거부, contract당 Deposit 1개, contract당 Engagement 1개
-- `create_engagement_from_contract`의 실패 4가지, 성공, `WAITING_CONTENT`, 중복 거부, `deposit.engagement_id` 연결
-- anon Data API: `templates` 거부, `templates_public`과 `faqs` 허용
-- authenticated 본인 행, admin 전체 SELECT
+적용 직전 public 테이블은 0, migration history는 0이었다. CLI를 `qzvxypynlluqpdpmsstu`에 연결한 뒤 dry-run 대상은 `001`–`028`뿐이었다. `db push`가 그 28개를 적용했다. 실패한 migration은 없다. 수동 SQL, 파일 수정, superuser 후처리는 없다.
 
-## 실행 금지
+| 항목 | 결과 |
+| --- | --- |
+| migration history | `001`–`028` |
+| public 테이블 | 30. Legacy와 Studio 목록이 모두 있다 |
+| 뷰 | `templates_public`. `preview_html`은 마지막 컬럼 |
+| 함수 | 11 |
+| RLS | public 테이블 전부 활성. 정책 102 |
+| FK / CHECK / trigger | 45 / 29 / 15 |
+| bucket | `project-uploads`, `project-outputs`, `thumbnails`, `refund-attachments`, `engagement-files`. `thumbnails`만 public |
+| `anon` | `templates` 거부(`42501`). `templates_public` 허용. `faqs` 허용 |
+| `authenticated` | 본인 `users`만 조회. 타인 행 0. 본인 project/order만 조회 |
+| admin | `users`, `projects`, `orders` 전체 SELECT |
+| Engagement INSERT | `authenticated` 거부(`42501`) |
+| `create_engagement_from_contract` | `anon`과 `authenticated`는 EXECUTE 불가. `service_role`만 가능 |
 
-공식 프로젝트 `qzvxypynlluqpdpmsstu`에는 다음 지시가 있기 전에 하지 않는다.
+검증에 쓴 사용자, 템플릿, project, order는 롤백했다. 남은 `auth.users`는 0이다. `005` FAQ 시드는 migration에 포함되어 있다. Edge Function은 배포하지 않았다. Vercel env와 production 런타임은 바꾸지 않았다.
 
-- supabase link
-- supabase db push
-- migration apply
-- CREATE TABLE, ALTER TABLE
-- RLS 적용
+## 아직 하지 않음
+
 - Edge Function deploy
-- Storage bucket 생성
 - Vercel production env 변경
 - 기존 사이트 Supabase env 변경
+- 관리자 계정 생성
+- 실제 고객 또는 템플릿 데이터 입력
 
-## 나중에 적용할 때의 순서
-
-1. 대상이 `qzvxypynlluqpdpmsstu`인지 확인한다. P1에서 확인했다.
-2. public schema가 비어 있는지 확인한다. P1에서 테이블 0, history 0이었다.
-3. 현재 운영 env를 바꾸지 않은 상태에서 `001`–`028`을 순서대로 적용한다. bucket은 `019`와 `025`에 있다. 별도 Commerce bucket migration을 추가하지 않는다.
-4. 위 Preflight의 적용 후 검사를 실행한다.
-5. Edge Function을 배포한다.
-6. Legacy 구매 경로와 Studio 빈 화면을 확인한다.
-7. 그때만 production env 전환을 별도로 결정한다.
-
-3번부터는 승인 없이 실행하지 않는다.
+다음은 Edge와 Auth, staging 확인, Legacy Commerce regression, Studio persistence다. 그 다음에만 production env를 결정한다.
