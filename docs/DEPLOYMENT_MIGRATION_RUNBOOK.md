@@ -157,6 +157,41 @@ FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면
 
 `supabase db push`와 공식 프로젝트 SQL Editor 실행은 하지 않는다. 2026-09-29 로컬 시험은 위 기록대로 임시 Docker에서만 했다.
 
+## 2026-09-29 공식 Preflight
+
+대상은 SEOAH.STUDIO, `qzvxypynlluqpdpmsstu`, ap-northeast-2, ACTIVE_HEALTHY, Postgres 17.6이다. 공식 DB는 변경하지 않았다.
+
+| 항목 | 결과 |
+| --- | --- |
+| public 테이블, 뷰, 함수, RLS 정책 | 0 |
+| `supabase_migrations` | 스키마 없음. history 0 |
+| `auth.users` | 0 |
+| `storage.objects` 소유자 | `supabase_storage_admin` |
+| `storage.objects` RLS | 이미 활성. 정책 0 |
+| bucket | 없음 |
+| Auth | 이메일 사용 가능. OAuth provider는 모두 꺼짐. 가입 확인 메일은 켜짐 |
+| Site URL | `http://localhost:3000`. redirect URL은 비어 있음 |
+| Data API 노출 스키마 | config 비교에서 `api.schemas` 차이가 없음. CLI 기본값인 `public`, `graphql_public`과 같음 |
+| migration 파일 | `001`–`028` 누락 없음 |
+
+이 프로젝트의 public 기본 권한은 새 테이블과 함수에 `anon`, `authenticated`, `service_role`을 포함한다. `024`와 `027`이 그 권한을 걷고 필요한 권한만 다시 준다. `027`은 이 기본값과 충돌하지 않고, 적용 순서 안에서 필요하다. `003`의 `ALTER TABLE storage.objects` 제거는 공식 프로젝트에도 맞다. RLS가 이미 켜져 있기 때문이다.
+
+SECURITY DEFINER 함수의 최종 `search_path`는 `public` 또는 빈 문자열이다. `001`의 `handle_new_user`는 `020`에서 교체된다. `create_engagement_from_contract`는 `service_role`만 EXECUTE한다. 관리자 RPC는 `authenticated`에 열려 있고 함수 안에서 `is_admin`을 확인한다. 공식 적용을 막는 결함은 없다.
+
+적용 순서는 `001` → `028`이다. 하나라도 실패하면 즉시 멈춘다. 파일을 건너뛰거나, 수동 SQL로 중간 상태를 고치거나, 실패한 이력을 남긴 채 뒤를 성공 처리하지 않는다.
+
+이 DB에는 고객 데이터가 없다. 실패하면 부분 스키마와 migration history를 함께 비운 뒤에만 `001`부터 다시 시작한다. history만 남으면 다음 적용이 이미 기록된 버전을 건너뛴다. 그 정리는 별도 지시가 있기 전에 실행하지 않는다. 로컬 `db reset`을 공식 프로젝트에 대응시켜 실행하지 않는다.
+
+적용이 성공해도 Vercel production env는 바로 바꾸지 않는다. 순서는 DB 적용, DB 검증, Storage/Edge/Auth, staging 또는 로컬 클라이언트 확인, Legacy Commerce regression, Studio persistence, 그 다음 production env 결정이다.
+
+적용 뒤 확인할 것:
+
+- 테이블, 뷰, 함수, FK, CHECK, trigger, RLS, policy, grant, bucket
+- 규칙 20개. Engagement INSERT 거부, 잘못된 proposal/contract version 거부, milestone 교차 거부, contract당 Deposit 1개, contract당 Engagement 1개
+- `create_engagement_from_contract`의 실패 4가지, 성공, `WAITING_CONTENT`, 중복 거부, `deposit.engagement_id` 연결
+- anon Data API: `templates` 거부, `templates_public`과 `faqs` 허용
+- authenticated 본인 행, admin 전체 SELECT
+
 ## 실행 금지
 
 공식 프로젝트 `qzvxypynlluqpdpmsstu`에는 다음 지시가 있기 전에 하지 않는다.
@@ -173,17 +208,12 @@ FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면
 
 ## 나중에 적용할 때의 순서
 
-1. 대상이 `qzvxypynlluqpdpmsstu`인지 확인한다.
-2. public schema가 비어 있는지 확인한다.
-3. 현재 운영 env를 바꾸지 않은 상태에서 baseline을 검토한다.
-4. `001`–`020`을 순서대로 적용한다.
-5. Commerce 버킷 세 개를 만드는 추가 migration을 적용한다.
-6. Group B Studio migration `021`–`026`을 적용한다.
-7. Legacy Data API 명시 권한 `027`을 적용한다.
-8. 관리자 전체 조회 정책 `028`을 적용한다.
-9. 역할별 RLS와 Data API 접근을 검증한다.
-10. Edge Function을 배포한다.
-11. Legacy 구매 경로와 Studio 빈 화면을 확인한다.
-12. 그때만 production env 전환을 별도로 결정한다.
+1. 대상이 `qzvxypynlluqpdpmsstu`인지 확인한다. P1에서 확인했다.
+2. public schema가 비어 있는지 확인한다. P1에서 테이블 0, history 0이었다.
+3. 현재 운영 env를 바꾸지 않은 상태에서 `001`–`028`을 순서대로 적용한다. bucket은 `019`와 `025`에 있다. 별도 Commerce bucket migration을 추가하지 않는다.
+4. 위 Preflight의 적용 후 검사를 실행한다.
+5. Edge Function을 배포한다.
+6. Legacy 구매 경로와 Studio 빈 화면을 확인한다.
+7. 그때만 production env 전환을 별도로 결정한다.
 
-4번부터는 이 문서의 초안이다. 승인 없이 실행하지 않는다.
+3번부터는 승인 없이 실행하지 않는다.
