@@ -128,7 +128,9 @@ FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면
 
 `028`은 `public.is_admin()`을 재사용해 관리자 SELECT를 추가한다. 대상은 `users`, 삭제되지 않은 `projects`, `orders`다. `inquiries`, `chatbot_inquiries`, `refund_requests`의 관리자 SELECT는 006·007·017에 이미 있다. 새 GRANT는 없다.
 
-적용 전 Dashboard의 Data API 설정과 Security Advisor 결과를 다시 확인한다. 이 초안은 격리 실행으로 검증하지 않았다.
+적용 전 Dashboard의 Data API 설정과 Security Advisor 결과를 다시 확인한다.
+
+2026-09-29에 이 PC의 Docker Desktop `4.93.0`과 Supabase CLI `2.118.0`로 임시 Postgres `17.6`에만 시험했다. 공식 프로젝트는 사용하지 않았다. CLI `db reset`은 `003`에서 `storage.objects` 소유권 오류로 멈춘다. 로컬 슈퍼유저 적용은 `014`의 `templates_public` 컬럼 순서에서 멈춘다. 그 뷰만 로컬에서 컬럼을 뒤에 붙이면 `015`–`028`과 생성 규칙 검사는 통과한다. 저장소의 `014`는 아직 그대로다.
 
 ## Data API 계약
 
@@ -151,11 +153,11 @@ FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면
 | 고객 본인 | `users`, `projects`, `orders`, `downloads` | authenticated | 본인 SELECT/UPDATE 또는 INSERT | `*_own` 정책. `orders` INSERT 없음 | |
 | Engagement 생성 | `create_engagement_from_contract` | service_role | EXECUTE | APPROVED, AGREED, DEPOSIT PAID | authenticated INSERT 금지 |
 
-`supabase db push`, `supabase migration up`, `supabase db reset`, SQL Editor 실행을 하지 않는다.
+`supabase db push`와 공식 프로젝트 SQL Editor 실행은 하지 않는다. 2026-09-29 로컬 시험은 위 기록대로 임시 Docker에서만 했다.
 
 ## 실행 금지
 
-다음 지시가 있기 전에는 어떤 환경에서도 하지 않는다.
+공식 프로젝트 `qzvxypynlluqpdpmsstu`에는 다음 지시가 있기 전에 하지 않는다.
 
 - supabase link
 - supabase db push
