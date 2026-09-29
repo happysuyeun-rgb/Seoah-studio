@@ -1,6 +1,6 @@
 # SEOAH.STUDIO 프로젝트 상태 — 2026-09-28
 
-기준 코드: P3A.2 결제·환불·비공개 업로드. 최종 갱신일: 2026-09-29.
+기준 코드: P3A.3 배포 전 설정. 최종 갱신일: 2026-09-29.
 
 과거 이력은 `PROJECT_STATUS_2026-03-17.md`에 남아 있다. 그 파일은 지우지 않는다.
 
@@ -21,10 +21,11 @@
 - P3A. Edge Function 9개의 인증과 스키마 의존성을 감사했다. `send-email`은 서비스 역할, 본인 문의 알림, 관리자 답변만 보낸다. 배포, secret, Auth URL은 바꾸지 않았다.
 - P3A.1. `send-email`은 service role 일치 또는 `getUser`로 확인된 사용자만 받는다. anon 키 유무와 관계없이 비로그인 토큰은 사용자가 아니다. 계정 삭제는 `public.users` FK 15개를 보존 정책으로 처리하고, 챗봇 본문은 4000자 이하다. Edge Function은 배포하지 않았다.
 - P3A.2. 결제는 서버 가격 49000원과 PortOne 응답이 맞을 때만 `paid`가 된다. 환불 승인은 PortOne 취소 성공 후에만 DB를 바꾼다. 업로드는 `filePaths`만 저장하고 Edge가 private bucket에서 읽는다. `030`은 로컬 검증만 했고 공식 DB에는 적용하지 않았다.
+- P3A.3. 결제 `merchant_uid` 일치, `RESEND_FROM` 발신, Edge `verify_jwt`를 `supabase/config.toml`에 고정했다. `030`은 로컬에서만 다시 확인했다. 공식 history는 `001`–`029`이고 Edge Function은 0이다. 공식 `030` 적용과 Edge 배포는 아직이다.
 
 ## 보완 필요
 
-공식 스키마 bootstrap은 끝났다. Edge Function은 배포하지 않았고, Vercel production env와 앱 런타임은 바꾸지 않았다.
+공식 history는 `001`–`029`다. `030` 공식 적용은 남아 있다. Edge Function 배포, Vercel production env, Auth URL은 바꾸지 않았다.
 
 ## 공식 데이터베이스
 
@@ -51,7 +52,7 @@ Performance Advisor backlog, 이번 단계에서 수정하지 않음: unindexed 
 
 ## 다음
 
-Edge Function 배포, Vercel env 변경, production 런타임 전환은 아직 하지 않는다. Auth Site URL은 `http://localhost:3000` 그대로다.
+공식 `030` 적용과 Edge Function 배포는 다음 단계다. Vercel env와 Auth Site URL은 바꾸지 않는다. Site URL은 `http://localhost:3000` 그대로다.
 
 이 PC에서 사용자가 직접 한 일:
 

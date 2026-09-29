@@ -1,6 +1,6 @@
 # Deployment and Migration Runbook
 
-공식 스키마는 2026-09-29에 적용됐다. Edge Function과 production env는 아직 바꾸지 않는다.
+공식 history는 `001`–`029`다. `030_payment_integrity.sql`은 저장소와 로컬 reset에만 있다. 공식 DB에는 아직 없다. Edge Function은 배포하지 않았고 production env는 바꾸지 않았다.
 
 ## 공식 대상
 
@@ -9,7 +9,7 @@
 | 이름 | SEOAH.STUDIO |
 | Project Ref | `qzvxypynlluqpdpmsstu` |
 | Region | ap-northeast-2 |
-| public schema | bootstrap 완료. `001`–`029` |
+| public schema | 공식 `001`–`029`. 로컬은 `001`–`030` 검증 |
 | supabase link | `qzvxypynlluqpdpmsstu` |
 | migration | 원격 history `001`–`029` |
 | Edge Function | 배포 없음 |
@@ -24,6 +24,8 @@
 순서대로 적용하는 전제에서 `001`–`020`은 Legacy baseline으로 재사용할 수 있다. 파일을 고치지 않는다.
 
 `002`는 `001`의 정책을 지우고 다시 만든다. `012`는 템플릿 직접 SELECT를 막는다. `013`은 챗봇 공개 INSERT를 막는다. `020`은 `001`의 `handle_new_user`를 계정 유형이 들어가게 바꾼다. 중간만 적용하면 현재 코드와 어긋난다.
+
+아래 “코드와 migration의 차이”와 “021–028 초안”은 공식 적용 전에 쓴 기록이다. 버킷 5개는 `025`로 만들어져 있고, `021`–`029`는 공식에 적용돼 있다. `030`만 공식 적용 전이다.
 
 ## 코드와 migration의 차이
 
@@ -106,7 +108,7 @@ REPLACE와 DO NOT APPLY는 없다. 순서를 건너뛰거나 파일 내용을 �
 
 ## 021–028 초안
 
-저장소에 다음 파일이 있다. 이 파일들이 있어도 원격 적용은 아직 금지다.
+저장소에 다음 파일이 있다. 이 문단은 적용 전 초안 기록이다. `021`–`029`는 2026-09-29에 공식 적용이 끝났다.
 
 - `021_users_account_foundation.sql`
 - `022_studio_sales_domain.sql`
@@ -132,7 +134,7 @@ FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면
 
 2026-09-29에 이 PC의 Docker Desktop `4.93.0`과 Supabase CLI `2.118.0`로 임시 Postgres `17.6`에만 시험했다. 공식 프로젝트는 사용하지 않았다.
 
-`storage.objects`의 소유자는 `supabase_storage_admin`이고, Storage 초기화 시점에 RLS는 이미 켜져 있다. migration 역할 `postgres`는 소유자가 아니라 `ALTER TABLE storage.objects`만 실패하고, POLICY 생성과 삭제는 된다. 그래서 `003`에서 그 `ALTER`를 뺐다. `014`는 `preview_html`을 뷰의 마지막 컬럼으로 둔다. 이후 `db reset`은 `001`–`028`을 한 번에 적용한다. 규칙 검사 20개와 `anon` Data API 확인도 통과했다.
+`storage.objects`의 소유자는 `supabase_storage_admin`이고, Storage 초기화 시점에 RLS는 이미 켜져 있다. migration 역할 `postgres`는 소유자가 아니라 `ALTER TABLE storage.objects`만 실패하고, POLICY 생성과 삭제는 된다. 그래서 `003`에서 그 `ALTER`를 뺐다. `014`는 `preview_html`을 뷰의 마지막 컬럼으로 둔다. 이 문장의 reset 범위 `001`–`028`은 P0 당시 기록이다. 지금 로컬 reset은 `001`–`030`이고, 공식 history는 `001`–`029`다. 당시 규칙 검사 20개와 `anon` Data API 확인은 통과했다.
 
 ## Data API 계약
 
@@ -158,6 +160,8 @@ FAQ 쓰기, `users` DELETE, `orders` UPDATE, `inquiries` DELETE는 현재 화면
 2026-09-29 로컬 시험은 위 기록대로 임시 Docker에서만 했다. 공식 적용 결과는 아래 bootstrap 절에 있다.
 
 ## 2026-09-29 공식 Preflight
+
+이 절은 migration 적용 전의 기록이다. 당시 bucket은 없었고 적용 계획은 `001`–`028`이었다. 적용 후 공식 history는 `001`–`029`이고 bucket은 5개다. `030`은 이 기록 이후에 저장소에만 추가됐다.
 
 대상은 SEOAH.STUDIO, `qzvxypynlluqpdpmsstu`, ap-northeast-2, ACTIVE_HEALTHY, Postgres 17.6이다. 공식 DB는 변경하지 않았다.
 

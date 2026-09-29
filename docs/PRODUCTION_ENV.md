@@ -16,15 +16,19 @@
 
 ## Supabase Edge Function Secrets
 
-Edge Function에서 사용하는 시크릿은 Supabase 대시보드에서 설정합니다.
+이름은 여기 적는다. 값은 적지 않는다. 플랫폼이 넣는 값과 직접 넣는 값을 구분한다.
 
-| 시크릿 | 사용처 | 필수 |
-|--------|--------|------|
-| `ANTHROPIC_API_KEY` | ai-customize (Claude API 연동 시) | 선택 (미설정 시 폴백 데이터 사용) |
-| `RESEND_API_KEY` | send-email (결제 완료·문의·환불 알림 이메일) | 선택 |
-| `PORTONE_IMP_KEY` | verify-payment, process-refund (아임포트 REST API 키) | 결제·환불 시 권장 |
-| `PORTONE_IMP_SECRET` | verify-payment, process-refund (아임포트 REST API Secret) | 결제·환불 시 권장 |
-| `ADMIN_EMAIL` | send-email (환불 요청 접수 알림 수신 주소) | 환불 알림 필요 시 필수, 미설정 시 건너뜀 |
+| 이름 | 구분 | 없을 때 |
+|------|------|---------|
+| `SUPABASE_URL` | platform provided. Edge 런타임이 넣음 | 함수가 기동 설정을 못 함 |
+| `SUPABASE_SERVICE_ROLE_KEY` | platform provided. Edge 런타임이 넣음 | DB와 Storage 호출 불가 |
+| `SUPABASE_ANON_KEY` | platform provided. `submit-contact`가 로그인 사용자를 구분할 때 사용 | 문의는 비로그인으로 저장 |
+| `ANTHROPIC_API_KEY` | optional. `ai-customize` | 키 없이 기본 문구로 HTML을 만듦 |
+| `PORTONE_IMP_KEY` 또는 `IMP_KEY` | required for payment verification and refund approval | 결제 주문 없음. 환불 승인 없음. 환불 거절은 가능 |
+| `PORTONE_IMP_SECRET` 또는 `IMP_SECRET` | required for payment verification and refund approval | 위와 같음 |
+| `RESEND_API_KEY` | optional. `send-email` | 메일을 건너뛰고 성공으로 반환 |
+| `RESEND_FROM` | required for actual send when `RESEND_API_KEY` is set | `EMAIL_NOT_CONFIGURED`. 발송하지 않음 |
+| `ADMIN_EMAIL` | required for the refund-request alert only | 환불 접수 메일만 건너뜀 |
 
 - Supabase 대시보드 → Project Settings → Edge Functions → Secrets.
 
@@ -41,7 +45,8 @@ VITE_GA4_MEASUREMENT_ID=G-XXXXXXXXXX
 
 ## Supabase Storage 버킷
 
-- **project-uploads**: 업로드 파일 (private 권장)
-- **project-outputs**: 결제 완료 시 생성되는 zip (private). verify-payment에서 `{projectId}/website.zip` 업로드 후 7일 signed URL 발급.
-- **thumbnails**: 템플릿 썸네일 (public). 관리자에서 업로드 시 사용.
-- **refund-attachments**: 환불 요청 첨부파일 (private). RefundRequestPage에서 업로드, submit-refund-request 연동.
+- **project-uploads**: private. 화면은 경로만 저장한다.
+- **project-outputs**: private. 결제 후 `{projectId}/website.zip`.
+- **thumbnails**: public.
+- **refund-attachments**: private.
+- **engagement-files**: private. Studio 파일. Edge Function은 쓰지 않는다.

@@ -1,6 +1,10 @@
 # Edge Function API 요약
 
-Supabase Edge Functions (Deno). 모든 요청에 `Authorization: Bearer {JWT}` 필수. CORS 헤더 포함.
+Supabase Edge Functions (Deno). 게이트웨이 JWT 검사는 `supabase/config.toml`의 `verify_jwt`를 따른다.
+
+로그인 JWT가 필요한 함수: `ai-customize`, `delete-account`, `get-download-url`, `process-refund`, `send-email`, `submit-refund-request`, `verify-payment`.
+
+비로그인 호출이 가능한 함수: `submit-contact`, `submit-chatbot-inquiry`. 이 둘은 `verify_jwt = false`이고, 함수 안에서 입력을 검사한다. `submit-contact`만 사용자 JWT가 있으면 계정을 연결한다.
 
 ---
 
@@ -41,7 +45,7 @@ Supabase Edge Functions (Deno). 모든 요청에 `Authorization: Bearer {JWT}` �
 
 ### 현재 구현 상태
 
-- .txt/.md 파싱 구현됨. .pptx/.docx (mammoth) · 이미지 Vision 미연동 (Phase 3 보완 예정).
+- `.txt`, `.md`, `.docx`, `.pptx`는 private `project-uploads` 경로에서 읽는다. 이미지와 PDF는 텍스트 추출을 하지 않는다. 임의 URL fetch는 하지 않는다.
 - Realtime 구독 미적용 — 클라이언트에서 2초 폴링으로 status 감지.
 
 ---
@@ -49,7 +53,7 @@ Supabase Edge Functions (Deno). 모든 요청에 `Authorization: Bearer {JWT}` �
 ## 2. verify-payment
 
 **POST** `/functions/v1/verify-payment`  
-포트원 imp_uid로 결제를 검증하고 orders 테이블에 INSERT. PortOne 응답의 `pay_method`(card/phone/vbank 등)를 `orders.payment_method`에 저장. 성공 시 send-email 호출.
+로그인 사용자 전용. 판매 중인 플랜은 `html` 49,000원뿐이고, 금액은 서버 가격으로 정한다. 요청 `amount`는 승인에 쓰지 않는다. PortOne 키가 없으면 주문을 만들지 않는다. 조회 결과의 `status=paid`, 금액, `merchant_uid`가 요청 `merchant_uid`와 같아야 한다. `imp_uid`와 `payment_key` 중복은 DB에서 거부한다.
 
 ### Request Body
 
@@ -57,7 +61,7 @@ Supabase Edge Functions (Deno). 모든 요청에 `Authorization: Bearer {JWT}` �
 |------|------|------|------|
 | imp_uid | string | 필수 | 포트원 결제 고유번호 |
 | merchant_uid | string | 필수 | 주문번호 (order_{timestamp}) |
-| amount | number | 필수 | 결제 요청 금액 (원) |
+| amount | number | 선택 | 클라이언트가 보내도 승인 금액으로 쓰지 않음 |
 | projectId | string | 필수 | 결제할 프로젝트 UUID |
 | planType | string | 필수 | html / url / pdf / ppt / figma |
 
@@ -77,8 +81,11 @@ Supabase Edge Functions (Deno). 모든 요청에 `Authorization: Bearer {JWT}` �
 |------|------|------|
 | 400 | INVALID_PARAMS | 필수 파라미터 누락 |
 | 401 | UNAUTHORIZED | JWT 누락 또는 만료 |
-| 402 | AMOUNT_MISMATCH | 금액 불일치 → 자동 환불 처리 |
+| 402 | AMOUNT_MISMATCH | PortOne 금액이 서버 가격과 다름 |
+| 409 | PAYMENT_REFERENCE_MISMATCH | PortOne `merchant_uid`가 요청과 다름 |
 | 409 | ALREADY_PAID | 이미 결제된 프로젝트 |
+| 409 | PAYMENT_ALREADY_PROCESSED | 같은 `imp_uid` 또는 `payment_key` |
+| 503 | PAYMENT_NOT_CONFIGURED | PortOne 키 없음 |
 | 500 | PORTONE_ERROR | 포트원 API 호출 실패 |
 | 500 | DB_ERROR | orders INSERT 실패 |
 
@@ -87,18 +94,28 @@ Supabase Edge Functions (Deno). 모든 요청에 `Authorization: Bearer {JWT}` �
 ## 3. send-email
 
 **POST** `/functions/v1/send-email`  
-Resend API를 통해 이메일 발송. type에 따라 결제 완료 / 문의 접수 / 문의 답변 / 환불 알림 등 처리.
+로그인 JWT 또는 service role만 호출한다. 브라우저가 보낼 수 있는 type은 본인 문의 `inquiry_alert`와 관리자 답변 `inquiry_answered`뿐이다. 수신자는 DB 또는 `ADMIN_EMAIL`에서 정하고, 요청의 임의 `to`는 쓰지 않는다. 결제, 환불, 챗봇 메일은 다른 Edge Function이 service role로만 보낸다. 발신 주소는 `RESEND_FROM`만 사용한다. `RESEND_API_KEY`가 없으면 발송을 건너뛴다. 키는 있는데 `RESEND_FROM`이 없으면 `EMAIL_NOT_CONFIGURED`이며 보내지 않는다.
 
-### Request Body — type별
+### 브라우저가 보낼 수 있는 type
 
-| type | 필수 필드 | 설명 |
-|------|-----------|------|
-| payment_complete | to, userName, projectId, planType, orderId | 결제 완료 + 다운로드 링크 발송 |
-| inquiry_alert | inquiryId, subject, body, userEmail | 관리자에게 문의 접수 알림 |
-| inquiry_answered | to, inquirySubject, adminReply | 고객에게 답변 등록 알림 |
-| refund_alert | orderId (reason, amount, userId 선택) | 관리자에게 환불 요청 접수 알림. ADMIN_EMAIL 환경 변수 필요, 없으면 건너뜀 |
-| refund_approved | to, refundAmount | 고객에게 환불 승인 안내 |
-| refund_rejected | to, reviewNote(선택) | 고객에게 환불 거절 안내 |
+| type | 호출 | 수신자 |
+|------|------|--------|
+| inquiry_alert | 로그인 사용자, 본인 문의 `inquiryId` | `ADMIN_EMAIL` |
+| inquiry_answered | 관리자, 해당 문의 `inquiryId` | 문의에 저장된 이메일 |
+
+요청의 `to`와 `from`은 수신·발신으로 쓰지 않는다.
+
+### service role만 보낼 수 있는 type
+
+`payment_complete`, `chatbot_alert`, `refund_alert`, `refund_approved`, `refund_rejected`. 일반 사용자 JWT로 이 type을 보내면 거절한다.
+
+| type | 설명 |
+|------|------|
+| payment_complete | 결제 완료. 수신자는 주문 사용자 |
+| chatbot_alert | 챗봇 문의 알림. 수신자는 `ADMIN_EMAIL` |
+| refund_alert | 환불 접수 알림. `ADMIN_EMAIL`이 없으면 건너뜀 |
+| refund_approved | 환불 승인 안내 |
+| refund_rejected | 환불 거절 안내 |
 
 ### Response 200
 
@@ -114,6 +131,7 @@ Resend API를 통해 이메일 발송. type에 따라 결제 완료 / 문의 접
 | HTTP | 코드 | 설명 |
 |------|------|------|
 | 400 | INVALID_EMAIL | 이메일 형식 오류 |
+| 503 | EMAIL_NOT_CONFIGURED | `RESEND_API_KEY`는 있으나 `RESEND_FROM`이 없음. 발송하지 않음 |
 | 500 | RESEND_ERROR | Resend API 호출 실패 |
 | 500 | URL_GENERATE_FAILED | Storage signed URL 생성 실패 |
 
@@ -168,5 +186,27 @@ Resend API를 통해 이메일 발송. type에 따라 결제 완료 / 문의 접
 
 | HTTP | 코드 | 설명 |
 |------|------|------|
-| 502 | PORTONE_CANCEL_FAILED | PortOne 환불 API 실패 → 수동 환불 후 관리자에서 상태 확인 |
+| 502 | PORTONE_CANCEL_FAILED | PortOne 환불 API 실패. 주문 상태는 바꾸지 않음 |
 | 500 | REFUND_ERROR | 환불 API 호출 중 오류 |
+| 500 | REFUND_DB_CRITICAL | 취소는 되었으나 DB 저장 실패 |
+
+---
+
+## 7. delete-account
+
+**POST** `/functions/v1/delete-account`  
+로그인 사용자 본인만. 로그인 계정을 지우고, 주문·계약·프로젝트 기록은 placeholder로 남긴다.
+
+---
+
+## 8. submit-contact
+
+**POST** `/functions/v1/submit-contact`  
+비로그인 가능. `verify_jwt = false`. 이름, 이메일, 유형, 본문을 검사하고 같은 IP는 10분에 3건까지다.
+
+---
+
+## 9. submit-chatbot-inquiry
+
+**POST** `/functions/v1/submit-chatbot-inquiry`  
+비로그인 가능. `verify_jwt = false`. 본문 4000자, 이름 50자, 이메일 200자. 같은 IP는 1분에 5건까지다.

@@ -61,6 +61,7 @@ Deno.serve(async (req) => {
     let paymentStatus: string | undefined
     let paidAmount: number | undefined
     let payMethod: string | null = null
+    let responseMerchantUid: string | undefined
     try {
       const tokenRes = await fetch('https://api.iamport.kr/users/getToken', {
         method: 'POST',
@@ -74,11 +75,12 @@ Deno.serve(async (req) => {
         const payRes = await fetch(`https://api.iamport.kr/payments/${encodeURIComponent(imp_uid)}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
-        const payData = (await payRes.json()) as { response?: { status?: string; amount?: number; pay_method?: string }; code?: number }
+        const payData = (await payRes.json()) as { response?: { status?: string; amount?: number; pay_method?: string; merchant_uid?: string }; code?: number }
         lookupOk = payData.code === 0 && Boolean(payData.response)
         paymentStatus = payData.response?.status
         paidAmount = payData.response?.amount == null ? undefined : Number(payData.response.amount)
         payMethod = payData.response?.pay_method ?? null
+        responseMerchantUid = payData.response?.merchant_uid
       }
     } catch (e) {
       console.error('verify-payment PortOne', e)
@@ -92,9 +94,13 @@ Deno.serve(async (req) => {
       paymentStatus,
       paidAmount,
       expectedAmount: plan.amount,
+      requestMerchantUid: merchant_uid,
+      responseMerchantUid,
     })
     if (!payment.ok) {
-      const message = payment.code === 'AMOUNT_MISMATCH'
+      const message = payment.code === 'PAYMENT_REFERENCE_MISMATCH'
+        ? '결제 참조번호가 일치하지 않습니다.'
+        : payment.code === 'AMOUNT_MISMATCH'
         ? '결제 금액이 일치하지 않습니다. 환불이 필요할 수 있습니다.'
         : payment.code === 'PAYMENT_SERVICE_ERROR'
           ? '결제 서비스 인증에 실패했습니다.'

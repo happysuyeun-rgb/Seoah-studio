@@ -28,31 +28,20 @@ npm run dev
 
 ## Supabase 설정
 
-1. **SQL 실행**  
-   `supabase/migrations/001_initial_schema.sql` → 대시보드 SQL Editor에서 실행  
-   (또는 Supabase CLI: `supabase db push`)
+스키마는 `supabase/migrations`의 `001`부터 `030`까지가 기준이다. SQL Editor에 migration을 붙여 넣어 부트스트랩하지 않는다. 적용은 Supabase CLI migration으로 한다. 공식 프로젝트에 어디까지 적용됐는지는 `docs/PROJECT_STATUS_2026-09-28.md`와 `docs/DEPLOYMENT_MIGRATION_RUNBOOK.md`를 본다.
 
-2. **시드 템플릿**  
-   `supabase/seed_templates.sql` 실행 (선택)
+Storage bucket은 migration이 만든다. `project-uploads`, `project-outputs`, `thumbnails`, `refund-attachments`, `engagement-files`의 5개이고 `thumbnails`만 public이다.
 
-3. **Auth**  
-   Authentication → Providers에서 Kakao, Google OAuth 활성화 및 키 설정
+Edge Function은 9개다. `ai-customize`, `delete-account`, `get-download-url`, `process-refund`, `send-email`, `submit-refund-request`, `verify-payment`, `submit-contact`, `submit-chatbot-inquiry`. 게이트웨이 JWT 설정은 `supabase/config.toml`에 있다.
 
-4. **Storage**  
-   버킷 생성: `project-uploads` (private), `project-outputs` (private), `thumbnails` (public)
-
-5. **Edge Functions**  
-   - `ai-customize`: 프로젝트 입력 기반 AI 커스터마이징 (현재 폴백 HTML 반환)  
-   - `verify-payment`: 결제 검증 및 orders INSERT  
-
-   배포: `supabase functions deploy ai-customize`, `supabase functions deploy verify-payment`
+이메일 가입이 기본이다. Google 또는 Kakao OAuth는 필요하면 그때 따로 켠다.
 
 ## 라우트
 
 | 경로 | 설명 |
 |------|------|
 | / | 홈 (카테고리 3종, CTA) |
-| /login | 로그인 (카카오/구글) |
+| /login | 로그인 (이메일. OAuth는 별도 설정) |
 | /auth/callback | OAuth 콜백 |
 | /templates/:category | 템플릿 갤러리 |
 | /templates/detail/:id | 템플릿 상세(iframe 미리보기) |

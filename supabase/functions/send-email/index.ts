@@ -3,6 +3,7 @@
 // A browser may request only its own inquiry alert, or an admin reply whose recipient comes from the database.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { classifyCaller, decideMail } from './access.ts'
+import { resolveOutboundMail } from './mail.ts'
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
 type ApiError = { code: string; message: string; detail?: unknown }
@@ -96,7 +97,7 @@ Deno.serve(async (req) => {
         hasInquiryId: Boolean(body.inquiryId),
         clientTo,
         customerEmail,
-        adminEmail: Deno.env.get('ADMIN_EMAIL') ?? Deno.env.get('RESEND_FROM') ?? 'support@seoah.studio',
+        adminEmail: Deno.env.get('ADMIN_EMAIL') ?? 'support@seoah.studio',
       })
       if (!decision.ok) {
         const message = decision.code === 'MISSING_INQUIRY'
@@ -120,7 +121,7 @@ Deno.serve(async (req) => {
     let html: string
 
     if (body.type === 'inquiry_alert' && body.inquiryId && body.subject != null) {
-      const adminEmail = Deno.env.get('ADMIN_EMAIL') ?? Deno.env.get('RESEND_FROM') ?? 'support@seoah.studio'
+      const adminEmail = Deno.env.get('ADMIN_EMAIL') ?? 'support@seoah.studio'
       to = adminEmail
       subject = '[SEOAH.STUDIO] 1:1 문의 접수: ' + (body.subject?.slice(0, 50) || '')
       html = `
@@ -133,7 +134,7 @@ Deno.serve(async (req) => {
         <p>— SEOAH.STUDIO</p>
       `
     } else if (body.type === 'chatbot_alert' && body.category != null && body.content != null) {
-      const adminEmail = Deno.env.get('ADMIN_EMAIL') ?? Deno.env.get('RESEND_FROM') ?? 'support@seoah.studio'
+      const adminEmail = Deno.env.get('ADMIN_EMAIL') ?? 'support@seoah.studio'
       to = adminEmail
       subject = '[SEOAH.STUDIO] 챗봇 문의: ' + (body.category?.slice(0, 30) || '')
       html = `
@@ -203,6 +204,18 @@ Deno.serve(async (req) => {
       `
     }
 
+    const outbound = resolveOutboundMail({
+      apiKey,
+      resendFrom: Deno.env.get('RESEND_FROM'),
+      bodyFrom: (body as { from?: string }).from,
+    })
+    if (!outbound.send) {
+      if (outbound.code === 'SKIPPED') {
+        return jsonResponse({ success: true, data: { skipped: true } }, 200, traceId)
+      }
+      return jsonResponse({ success: false, error: { code: 'EMAIL_NOT_CONFIGURED', message: '발신 주소가 설정되지 않았습니다.' } }, outbound.status, traceId)
+    }
+
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -210,7 +223,7 @@ Deno.serve(async (req) => {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        from: 'SEOAH.STUDIO <onboarding@resend.dev>',
+        from: outbound.from,
         to: [to],
         subject,
         html,
