@@ -1,5 +1,6 @@
 // Supabase Edge Function: 챗봇 문의 접수 (v2.1 Rate Limit + traceId)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { CHATBOT_RATE_LIMIT, CHATBOT_RATE_WINDOW_MS, validateChatbotInput } from './validate.ts'
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
 
@@ -27,14 +28,12 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: { code: 'INVALID_JSON', message: 'Invalid request body' } }, 400, traceId)
     }
 
-    const category = (body.category ?? '').trim()
-    const content = (body.content ?? '').trim()
-    const name = (body.name ?? '').trim()
-    const email = (body.email ?? '').trim()
-
-    if (!content || !name || !email) {
-      return jsonResponse({ success: false, error: { code: 'MISSING_PARAMS', message: 'content, name, email required' } }, 400, traceId)
+    const parsed = validateChatbotInput(body)
+    if (!parsed.ok) {
+      const message = parsed.code === 'MISSING_PARAMS' ? 'content, name, email required' : '입력 내용을 확인해 주세요.'
+      return jsonResponse({ success: false, error: { code: parsed.code, message } }, parsed.status, traceId)
     }
+    const { category, content, name, email } = parsed
 
     const ip = getClientIp(req)
     const ua = req.headers.get('user-agent') ?? ''
@@ -47,7 +46,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceRoleKey)
 
     // Rate limit: IP당 1분 5건
-    const oneMinuteAgo = new Date(Date.now() - 60_000).toISOString()
+    const oneMinuteAgo = new Date(Date.now() - CHATBOT_RATE_WINDOW_MS).toISOString()
     const { count: recentCount, error: countErr } = await supabase
       .from('chatbot_inquiries')
       .select('*', { count: 'exact', head: true })
@@ -59,7 +58,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ success: false, error: { code: 'INTERNAL_ERROR', message: 'rate limit check failed' } }, 500, traceId)
     }
 
-    if ((recentCount ?? 0) >= 5) {
+    if ((recentCount ?? 0) >= CHATBOT_RATE_LIMIT) {
       return jsonResponse({ success: false, error: { code: 'RATE_LIMITED', message: '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.' } }, 429, traceId)
     }
 

@@ -379,8 +379,7 @@ export function AdminPage() {
         await supabase.functions.invoke('send-email', {
           body: {
             type: 'inquiry_answered',
-            to: inquiry.userEmail,
-            inquirySubject: inquiry.subject,
+            inquiryId: inquiryReplyId,
             adminReply: inquiryReplyText.trim(),
           },
         })

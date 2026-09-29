@@ -134,9 +134,6 @@ export function SupportPage() {
         body: {
           type: 'inquiry_alert',
           inquiryId: row?.id,
-          subject,
-          body,
-          userEmail: user.email ?? '',
         },
       })
       if (emailError) {

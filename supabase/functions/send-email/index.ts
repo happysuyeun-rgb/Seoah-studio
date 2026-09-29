@@ -1,4 +1,9 @@
 // Supabase Edge Function: 결제 완료 이메일 (Resend API 연동) — v2 S1-P3
+// Payment, refund, and chatbot mail are sent only by other Edge Functions with the service role.
+// A browser may request only its own inquiry alert, or an admin reply whose recipient comes from the database.
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { classifyCaller, decideMail } from './access.ts'
+
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
 type ApiError = { code: string; message: string; detail?: unknown }
 type ApiResponse = { success: boolean; data?: { skipped?: boolean }; error?: ApiError; traceId?: string }
@@ -29,12 +34,81 @@ Deno.serve(async (req) => {
       category?: string
       content?: string
       name?: string
+      orderId?: string
+      reason?: string
+      amount?: number
     }
     try {
       body = (await req.json()) as typeof body
     } catch {
       return jsonResponse({ success: false, error: { code: 'INVALID_JSON', message: 'Invalid request body' } }, 400, traceId)
     }
+
+    const authHeader = req.headers.get('Authorization') ?? ''
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim()
+    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? ''
+    const caller = await classifyCaller(token, serviceKey, async (jwt) => {
+      if (!supabaseUrl || !serviceKey) return null
+      const supabase = createClient(supabaseUrl, serviceKey)
+      const { data, error } = await supabase.auth.getUser(jwt)
+      if (error || !data.user?.id) return null
+      return { id: data.user.id }
+    })
+    if (caller.kind === 'anonymous') {
+      return jsonResponse({ success: false, error: { code: 'UNAUTHORIZED', message: 'Authorization required' } }, 401, traceId)
+    }
+    if (caller.kind === 'user') {
+      if (!supabaseUrl || !serviceKey) {
+        return jsonResponse({ success: false, error: { code: 'ENV_MISSING', message: '서버 환경 설정 오류' } }, 500, traceId)
+      }
+      const supabase = createClient(supabaseUrl, serviceKey)
+      const clientTo = body.to
+      body.to = undefined
+      let ownsInquiry = false
+      let isAdmin = false
+      let customerEmail: string | null = null
+      if (body.type === 'inquiry_alert' && body.inquiryId) {
+        const { data: inquiry } = await supabase.from('inquiries').select('id, user_id, subject, body').eq('id', body.inquiryId).maybeSingle()
+        ownsInquiry = Boolean(inquiry && inquiry.user_id === caller.userId)
+        if (ownsInquiry && inquiry) {
+          body.subject = inquiry.subject
+          body.body = inquiry.body
+          const { data: profile } = await supabase.from('users').select('email').eq('id', caller.userId).maybeSingle()
+          body.userEmail = profile?.email ?? ''
+        }
+      }
+      if (body.type === 'inquiry_answered' && body.inquiryId) {
+        const { data: admin } = await supabase.from('users').select('is_admin').eq('id', caller.userId).maybeSingle()
+        isAdmin = admin?.is_admin === true
+        const { data: inquiry } = await supabase.from('inquiries').select('id, user_id, subject').eq('id', body.inquiryId).maybeSingle()
+        if (inquiry?.user_id) {
+          const { data: owner } = await supabase.from('users').select('email').eq('id', inquiry.user_id).maybeSingle()
+          customerEmail = owner?.email ?? null
+          if (isAdmin) body.inquirySubject = inquiry.subject
+        }
+      }
+      const decision = decideMail({
+        caller: 'user',
+        type: body.type,
+        isAdmin,
+        ownsInquiry,
+        hasInquiryId: Boolean(body.inquiryId),
+        clientTo,
+        customerEmail,
+        adminEmail: Deno.env.get('ADMIN_EMAIL') ?? Deno.env.get('RESEND_FROM') ?? 'support@seoah.studio',
+      })
+      if (!decision.ok) {
+        const message = decision.code === 'MISSING_INQUIRY'
+          ? 'inquiryId required'
+          : decision.code === 'MISSING_TO'
+            ? '수신 이메일이 없습니다.'
+            : '이 메일 종류는 서버에서만 보낼 수 있습니다.'
+        return jsonResponse({ success: false, error: { code: decision.code, message } }, decision.status, traceId)
+      }
+      body.to = decision.to
+    }
+
     const apiKey = Deno.env.get('RESEND_API_KEY')
     if (!apiKey) {
       console.warn('RESEND_API_KEY not set, skipping email send')

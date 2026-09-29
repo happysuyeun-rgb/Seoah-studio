@@ -1,6 +1,6 @@
 # SEOAH.STUDIO 프로젝트 상태 — 2026-09-28
 
-기준 코드: P2.1 권한 축소. 최종 갱신일: 2026-09-29.
+기준 코드: P3A.1 Edge 배포 전 보강. 최종 갱신일: 2026-09-29.
 
 과거 이력은 `PROJECT_STATUS_2026-03-17.md`에 남아 있다. 그 파일은 지우지 않는다.
 
@@ -18,6 +18,8 @@
 - P1 Preflight. 공식 프로젝트 `qzvxypynlluqpdpmsstu`는 ACTIVE_HEALTHY, Postgres 17.6, public 테이블 0, migration history 0이다. SQL은 적용하지 않았다.
 - P2. 2026-09-29에 공식 프로젝트 `qzvxypynlluqpdpmsstu`에 `001`–`028`을 CLI migration으로 적용했다. 수동 SQL과 superuser 후처리는 없다.
 - P2.1. `029_security_hardening.sql`로 `templates_public` 쓰기를 막고 SECURITY DEFINER 함수의 PUBLIC/anon EXECUTE를 제거했다. 공식 history는 `001`–`029`이다.
+- P3A. Edge Function 9개의 인증과 스키마 의존성을 감사했다. `send-email`은 서비스 역할, 본인 문의 알림, 관리자 답변만 보낸다. 배포, secret, Auth URL은 바꾸지 않았다.
+- P3A.1. `send-email`은 service role 일치 또는 `getUser`로 확인된 사용자만 받는다. anon 키 유무와 관계없이 비로그인 토큰은 사용자가 아니다. 계정 삭제는 `public.users` FK 15개를 보존 정책으로 처리하고, 챗봇 본문은 4000자 이하다. Edge Function은 배포하지 않았다.
 
 ## 보완 필요
 
@@ -27,7 +29,7 @@
 
 | 항목 | 상태 |
 |------|------|
-| public schema | `001`–`028` 적용. 테이블 30, 뷰 `templates_public`, 함수 11 |
+| public schema | `001`–`029` 적용. 테이블 30, 뷰 `templates_public`, 함수 11 |
 | link | CLI가 `qzvxypynlluqpdpmsstu`에 연결됨 |
 | migration | history `001`–`029` |
 | Edge Function | 배포하지 않음 |

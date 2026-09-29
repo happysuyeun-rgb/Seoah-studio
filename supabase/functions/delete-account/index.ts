@@ -1,5 +1,6 @@
-// Edge Function: 회원탈퇴 [v2.2] — projects·inquiries 비식별화, Auth 사용자 삭제
+// Edge Function: 회원탈퇴. 로그인 계정만 지우고 거래·계약·프로젝트 기록은 placeholder로 남긴다.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { DELETED_USER_PLACEHOLDER, deletionSteps } from './policy.ts'
 
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' }
 type ApiError = { code: string; message: string; detail?: unknown }
@@ -7,9 +8,6 @@ type ApiResponse = { success: boolean; data?: unknown; error?: ApiError; traceId
 function jsonResponse(obj: ApiResponse, status: number, traceId: string) {
   return new Response(JSON.stringify({ ...obj, traceId }), { status, headers: { ...cors, 'Content-Type': 'application/json' } })
 }
-
-// 비식별화용 시스템 UUID (고정값, users에 레코드 필요)
-const DELETED_USER_PLACEHOLDER = '00000000-0000-0000-0000-000000000001'
 
 Deno.serve(async (req) => {
   const traceId = crypto.randomUUID()
@@ -48,17 +46,19 @@ Deno.serve(async (req) => {
         password: crypto.randomUUID(),
         email_confirm: true,
       })
-      if (createErr) console.warn('delete-account placeholder create', createErr)
+      if (createErr) {
+        console.error('delete-account placeholder create', createErr)
+        return jsonResponse({ success: false, error: { code: 'AUTH_ERROR', message: '계정 삭제에 실패했습니다. 고객센터에 문의해 주세요.' } }, 500, traceId)
+      }
     }
 
-    // projects 비식별화 (user_id → placeholder)
-    await supabase.from('projects').update({ user_id: DELETED_USER_PLACEHOLDER }).eq('user_id', userId)
-
-    // inquiries 비식별화
-    await supabase.from('inquiries').update({ user_id: DELETED_USER_PLACEHOLDER }).eq('user_id', userId)
-
-    // policy_agreements 삭제 (본인 동의 기록)
-    await supabase.from('policy_agreements').delete().eq('user_id', userId)
+    for (const step of deletionSteps()) {
+      const { error: stepErr } = await supabase.from(step.table).update(step.values).eq(step.matchColumn, userId)
+      if (stepErr) {
+        console.error('delete-account reassign', step.table, stepErr)
+        return jsonResponse({ success: false, error: { code: 'DB_ERROR', message: '계정 삭제에 실패했습니다. 고객센터에 문의해 주세요.' } }, 500, traceId)
+      }
+    }
 
     // Auth 사용자 삭제 (admin API)
     const { error: deleteErr } = await supabase.auth.admin.deleteUser(userId)
