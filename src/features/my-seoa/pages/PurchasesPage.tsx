@@ -18,13 +18,13 @@ const filters: { id: Filter; label: string }[] = [
 ]
 
 export function PurchasesPage() {
-  usePageTitle('Purchases — MY SEOA')
+  usePageTitle('구매 — MY SEOA')
   const [filter, setFilter] = useState<Filter>('all')
   const rows = portalData.purchases.filter((purchase) => filter === 'all' || purchase.category === filter)
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title="Purchases" description="구매한 제품과 다운로드 상태를 확인합니다." />
+      <PageHeader title="구매" description="구매한 제품과 다운로드 상태를 확인합니다." />
       <FilterTabs value={filter} options={filters} onChange={setFilter} />
       {rows.length === 0 ? (
         <EmptyState title="아직 구매한 제품이 없습니다." action={{ to: '/ready', label: 'Ready 제품 보기' }} />

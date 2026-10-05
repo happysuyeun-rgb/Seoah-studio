@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { postLoginPath } from '../lib/postLogin'
 import { supabase } from '../lib/supabase'
 
 export function AuthCallbackPage() {
@@ -20,7 +21,6 @@ export function AuthCallbackPage() {
         if (!target) {
           try {
             target = sessionStorage.getItem('seoah_returnTo')
-            if (target) sessionStorage.removeItem('seoah_returnTo')
           } catch (_) {}
         }
         const provider = session.user.app_metadata?.provider
@@ -34,11 +34,19 @@ export function AuthCallbackPage() {
             .eq('id', session.user.id)
             .maybeSingle()
           if (!profileError && (profile == null || profile.account_type == null)) {
+            if (returnToFromQuery) {
+              try {
+                sessionStorage.setItem('seoah_returnTo', returnToFromQuery)
+              } catch (_) {}
+            }
             navigate('/account-type', { replace: true })
             return
           }
         }
-        navigate(target ?? '/', { replace: true })
+        try {
+          sessionStorage.removeItem('seoah_returnTo')
+        } catch (_) {}
+        navigate(postLoginPath(target), { replace: true })
       } else {
         setError('로그인에 실패했습니다.')
       }

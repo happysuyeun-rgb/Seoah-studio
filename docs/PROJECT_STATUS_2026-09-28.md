@@ -1,6 +1,6 @@
 # SEOAH.STUDIO 프로젝트 상태 — 2026-09-28
 
-기준 코드: P3A.3 배포 전 설정. 최종 갱신일: 2026-09-29.
+기준 코드: 고객 경험 UI. 최종 갱신일: 2026-10-05.
 
 과거 이력은 `PROJECT_STATUS_2026-03-17.md`에 남아 있다. 그 파일은 지우지 않는다.
 
@@ -22,6 +22,7 @@
 - P3A.1. `send-email`은 service role 일치 또는 `getUser`로 확인된 사용자만 받는다. anon 키 유무와 관계없이 비로그인 토큰은 사용자가 아니다. 계정 삭제는 `public.users` FK 15개를 보존 정책으로 처리하고, 챗봇 본문은 4000자 이하다. Edge Function은 배포하지 않았다.
 - P3A.2. 결제는 서버 가격 49000원과 PortOne 응답이 맞을 때만 `paid`가 된다. 환불 승인은 PortOne 취소 성공 후에만 DB를 바꾼다. 업로드는 `filePaths`만 저장하고 Edge가 private bucket에서 읽는다. `030`은 로컬 검증만 했고 공식 DB에는 적용하지 않았다.
 - P3A.3. 결제 `merchant_uid` 일치, `RESEND_FROM` 발신, Edge `verify_jwt`를 `supabase/config.toml`에 고정했다. `030`은 로컬에서만 다시 확인했다. 공식 history는 `001`–`029`이고 Edge Function은 0이다. 공식 `030` 적용과 Edge 배포는 아직이다.
+- 고객 경험 UI. Public Home, Header, MY SEOA 작업공간, 로그인 이후 기본 경로 `/my`를 정리했다. 스키마, Edge Function, 결제, Storage는 바꾸지 않았다.
 
 ## 보완 필요
 

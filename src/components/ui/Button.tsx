@@ -12,7 +12,7 @@ const variants: Record<Variant, string> = {
 
 const sizes: Record<Size, string> = {
   md: 'min-h-11 px-4 text-sm',
-  sm: 'min-h-9 px-3 text-[13px]',
+  sm: 'min-h-11 px-3 text-[13px]',
 }
 
 function buttonClass(variant: Variant, size: Size, className?: string) {

@@ -7,7 +7,7 @@ import { ProgressTimeline } from '../components/ProgressTimeline'
 import { SectionHeader } from '../components/SectionHeader'
 import { SummaryMetric } from '../components/SummaryMetric'
 import { ActionRequiredPanel } from '../../engagements/components/ActionRequiredPanel'
-import { toCustomerProject } from '../../engagements/mappers'
+import { nextCustomerStage, toCustomerProject } from '../../engagements/mappers'
 import { useEngagementSource } from '../../engagements/useEngagementSource'
 import { portalData } from '../portalData'
 
@@ -23,59 +23,65 @@ export function DashboardPage() {
   const { engagements } = useEngagementSource()
   const projects = engagements.map(toCustomerProject)
   const current = projects.find((project) => project.status === 'active') ?? null
+  const nextStage = current ? nextCustomerStage(current.stage) : null
   const actions = engagements.flatMap((engagement) => (engagement.actionRequired ? [{ id: engagement.id, action: engagement.actionRequired, name: engagement.name }] : []))
 
   return (
     <div className="mx-auto max-w-5xl">
-      <header className="mb-10">
-        <p className="text-xs text-ink-faint">MY SEOA</p>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-ink">{name}님, 안녕하세요.</h1>
+      <header className="mb-12">
+        <p className="text-xs font-medium tracking-[0.14em] text-ink-faint">MY SEOA</p>
+        <h1 className="mt-3 text-3xl font-semibold tracking-tight text-ink">안녕하세요, {name}님.</h1>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink-soft">현재 진행 중인 프로젝트와 확인이 필요한 작업을 확인하세요.</p>
       </header>
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryMetric label="Active Projects" value={String(projects.filter((project) => project.status === 'active').length)} />
-        <SummaryMetric label="Action Required" value={String(actions.length)} />
-        <SummaryMetric label="Purchases" value={String(portalData.purchases.length)} />
-        <SummaryMetric label="Next Payment" value="없음" />
-      </section>
-
-      <section className="mt-12">
-        <SectionHeader title="Current Project" />
-        {current ? (
-          <div>
-            <h3 className="text-lg font-semibold tracking-tight text-ink">{current.name}</h3>
-            <p className="mt-2 text-sm text-ink-soft">
-              {current.stage} · {current.progress}% · {current.expectedCompletion}
-            </p>
-            <div className="mt-6">
-              <ProgressTimeline current={current.stage} />
+      <div className="grid gap-12 border-t-2 border-ink pt-8 lg:grid-cols-2 lg:gap-16">
+        <section>
+          <SectionHeader title="진행 중인 프로젝트" />
+          {current ? (
+            <div>
+              <h3 className="text-2xl font-semibold tracking-tight text-ink">{current.name}</h3>
+              <p className="mt-3 text-sm text-ink-soft">
+                {current.stage} · {current.progress}% · 완료 예정 {current.expectedCompletion}
+              </p>
+              <div className="mt-6">
+                <ProgressTimeline current={current.stage} />
+              </div>
+              {nextStage ? <p className="mt-4 text-sm text-ink-soft">다음 단계 {nextStage}</p> : null}
+              <ButtonLink to={`/my/projects/${current.id}`} variant="secondary" size="sm" className="mt-6">
+                프로젝트 보기
+              </ButtonLink>
             </div>
-          </div>
-        ) : (
-          <EmptyState title="진행 중인 Studio 프로젝트가 없습니다." action={{ to: '/studio/request', label: '프로젝트 의뢰하기' }} />
-        )}
+          ) : (
+            <EmptyState title="진행 중인 프로젝트가 없습니다." action={{ to: '/studio/request', label: '프로젝트 의뢰하기' }} />
+          )}
+        </section>
+
+        <section>
+          <SectionHeader title="확인이 필요합니다" />
+          {actions.length === 0 ? (
+            <p className="text-sm text-ink-soft">현재 확인할 작업이 없습니다.</p>
+          ) : (
+            <ul>
+              {actions.map((item) => (
+                <li key={item.id}>
+                  <p className="text-sm font-medium text-ink">{item.name}</p>
+                  <ActionRequiredPanel action={item.action} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      </div>
+
+      <section className="mt-12 grid gap-8 border-t border-line pt-8 sm:grid-cols-2">
+        <SummaryMetric label="구매" value={String(portalData.purchases.length)} />
+        <SummaryMetric label="다음 결제" value="없음" />
       </section>
 
       <section className="mt-12">
-        <SectionHeader title="Action Required" />
-        {actions.length === 0 ? (
-          <EmptyState title="지금 확인할 작업이 없습니다." />
-        ) : (
-          <ul>
-            {actions.map((item) => (
-              <li key={item.id}>
-                <p className="text-sm text-ink-faint">{item.name}</p>
-                <ActionRequiredPanel action={item.action} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section className="mt-12">
-        <SectionHeader title="Recent Purchases" />
+        <SectionHeader title="최근 구매" />
         {portalData.purchases.length === 0 ? (
-          <EmptyState title="아직 구매한 제품이 없습니다." action={{ to: '/ready', label: 'Ready 제품 보기' }} />
+          <EmptyState title="구매 내역이 없습니다." action={{ to: '/ready', label: 'Ready 제품 보기' }} />
         ) : (
           <ul className="divide-y divide-line border-t border-line">
             {portalData.purchases.map((purchase) => (
@@ -90,7 +96,7 @@ export function DashboardPage() {
       </section>
 
       <section className="mt-12">
-        <SectionHeader title="Recent Activity" />
+        <SectionHeader title="최근 활동" />
         {portalData.activities.length === 0 ? (
           <EmptyState title="최근 활동이 없습니다." />
         ) : (
@@ -105,22 +111,22 @@ export function DashboardPage() {
       </section>
 
       <section className="mt-12">
-        <SectionHeader title="Latest Files" />
+        <SectionHeader title="최근 파일" />
         {portalData.files.length === 0 ? <EmptyState title="받은 파일이 없습니다." /> : null}
       </section>
 
-      <section className="mt-12 border-t border-line pt-8">
-        <SectionHeader title="Quick Actions" />
-        <div className="flex flex-wrap gap-3">
-          <ButtonLink to="/ready" size="sm">
+      <section className="mt-16 border-t border-line pt-8">
+        <SectionHeader title="바로 가기" />
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
+          <Link to="/ready" className="inline-flex min-h-11 items-center text-sm text-ink-soft hover:text-ink">
             Ready 제품 보기
-          </ButtonLink>
-          <ButtonLink to="/studio/request" variant="secondary" size="sm">
+          </Link>
+          <Link to="/studio/request" className="inline-flex min-h-11 items-center text-sm text-ink-soft hover:text-ink">
             프로젝트 의뢰하기
-          </ButtonLink>
-          <ButtonLink to="/contact" variant="secondary" size="sm">
+          </Link>
+          <Link to="/contact" className="inline-flex min-h-11 items-center text-sm text-ink-soft hover:text-ink">
             문의하기
-          </ButtonLink>
+          </Link>
         </div>
       </section>
     </div>

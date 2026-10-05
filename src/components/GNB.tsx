@@ -25,7 +25,7 @@ export function GNB() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-paper/90 backdrop-blur">
+    <header className="sticky top-0 z-50 border-b border-line bg-paper">
       <PageContainer>
         <nav className="flex h-[4.5rem] items-center justify-between gap-6" aria-label="주요">
           <Link to="/" className="shrink-0 text-base font-semibold tracking-tight text-ink">
@@ -55,7 +55,7 @@ export function GNB() {
             </Link>
             <AuthActions isLoading={isLoading} user={Boolean(user)} onSignOut={handleSignOut} />
             <ButtonLink to={REQUEST_PATH} size="sm">
-              프로젝트 의뢰하기
+              프로젝트 시작
             </ButtonLink>
           </div>
 
@@ -88,7 +88,7 @@ export function GNB() {
             <div className="mt-2 flex flex-col gap-2 border-t border-line py-3">
               <AuthActions isLoading={isLoading} user={Boolean(user)} onSignOut={handleSignOut} stacked />
               <ButtonLink to={REQUEST_PATH} className="w-full">
-                프로젝트 의뢰하기
+                프로젝트 시작
               </ButtonLink>
             </div>
           </PageContainer>

@@ -25,7 +25,7 @@ export function PurchaseDetailPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title={purchase?.productName ?? 'Purchase'} description="구매 상세, 다운로드, 라이선스, 주문 정보를 이 화면에서 확인합니다." />
+      <PageHeader title={purchase?.productName ?? '구매'} description="구매 상세, 다운로드, 라이선스, 주문 정보를 이 화면에서 확인합니다." />
       <FilterTabs value={tab} options={tabs.map((item) => ({ id: item.id, label: item.label }))} onChange={setTab} />
       {purchase ? <p className="text-sm text-ink-soft">{purchase.category}</p> : <EmptyState title="구매 정보를 찾지 못했습니다." action={{ to: '/my/purchases', label: '구매 목록' }} />}
     </div>

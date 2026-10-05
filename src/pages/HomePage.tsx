@@ -1,262 +1,189 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ButtonLink } from '../components/ui/Button'
 import { SectionHeading } from '../components/ui/SectionHeading'
 import { MarketingSection } from '../components/marketing/MarketingSection'
 import { PageHero } from '../components/marketing/PageHero'
-import { PathList } from '../components/marketing/PathList'
-import { ProductComposition } from '../components/marketing/ProductComposition'
-import { ReadyPreview, ReadyThumb, type ReadyPreviewName } from '../components/marketing/ReadyPreview'
 import { REQUEST_PATH } from '../components/marketing/nav'
 import { usePageTitle } from '../components/marketing/usePageTitle'
 
-const paths = [
-  { label: 'Ready', text: '바로 시작할 웹사이트가 필요해요.', to: '/ready' },
-  { label: 'Studio', text: '우리 사업에 맞는 제품을 만들고 싶어요.', to: '/studio' },
-  { label: 'Care', text: '이미 만든 사이트를 운영하고 싶어요.', to: '/care' },
-  { label: 'SaaS', text: '팀에서 사용할 업무 도구가 필요해요.', to: '/saas' },
+const offers = [
+  { name: 'READY', text: '준비된 제품에서 시작합니다.' },
+  { name: 'STUDIO', text: '사업에 맞게 새로 만듭니다.' },
+  { name: 'CARE', text: '출시 이후의 운영을 이어갑니다.' },
+  { name: 'SAAS', text: '팀이 쓰는 도구를 준비합니다.' },
 ]
-
-const readyCategories: ReadyPreviewName[] = ['Startup', 'Solo Business', 'Small Business', 'Portfolio']
 
 const studioOffers = [
-  { name: 'Website', text: 'Business / Landing' },
-  { name: 'MVP', text: 'Web Product' },
-  { name: 'AI Product', text: 'AI-enabled Service' },
-  { name: 'Internal Tool', text: 'Operations / Admin' },
+  { name: 'Website', text: '사업 소개와 랜딩을 위한 사이트.' },
+  { name: 'MVP', text: '시장에서 확인할 수 있는 웹 제품.' },
+  { name: 'AI Product', text: '필요한 기능만 넣은 디지털 제품.' },
+  { name: 'Internal Tool', text: '운영과 관리를 위한 내부 도구.' },
 ]
 
-const studioFlow = ['Discovery', 'Planning', 'Design', 'Development', 'Launch']
+const steps = [
+  { name: 'Discover', text: '지금 필요한 것을 듣습니다.' },
+  { name: 'Define', text: '범위와 조건을 정합니다.' },
+  { name: 'Build', text: '설계하고 만듭니다.' },
+  { name: 'Launch', text: '검토한 뒤 전달합니다.' },
+]
+
+const flow = ['문의', 'Discovery', 'Proposal', 'Contract', 'Build', 'Review', 'Launch']
 
 const carePlans = [
-  {
-    name: 'Website Care Mini',
-    who: '작은 웹사이트 기본 운영',
-    items: ['텍스트/이미지 수정', '기본 상태 점검', '간단 오류 대응'],
-    price: '₩99,000',
-    unit: '/ month',
-  },
-  {
-    name: 'Website Care',
-    who: '운영 중인 비즈니스 웹사이트',
-    items: ['콘텐츠 수정', '정기 점검', '운영 지원'],
-    price: '₩199,000',
-    unit: '/ month',
-  },
-  {
-    name: 'Product Care',
-    who: 'MVP / Digital Product',
-    items: ['오류 대응', '운영 지원', '범위는 협의'],
-    price: '₩490,000~',
-    unit: '/ month',
-  },
+  { name: 'Website Care Mini', text: '작은 수정과 기본 상태 점검.', price: '월 9.9만원' },
+  { name: 'Website Care', text: '수정, 기본 점검, 운영 지원.', price: '월 19.9만원' },
+  { name: 'Product Care', text: '제품 운영. 범위는 별도 협의.', price: '월 49만원부터' },
 ]
 
-const practice = ['Planning', 'UX/UI', 'Development', 'Launch']
+const saasProducts = [
+  { name: 'Plan OS', text: '계획과 실행을 한 작업면에 두는 도구.' },
+  { name: 'Approval OS', text: '승인 요청과 결정을 남기는 도구.' },
+  { name: 'Voting', text: '팀의 선택을 모으는 도구.' },
+]
 
-const workCategories = ['Website', 'Product', 'Brand']
+function OfferMap() {
+  return (
+    <ol className="border-t-2 border-ink" aria-label="SEOAH.STUDIO 구성">
+      {offers.map((item, index) => (
+        <li key={item.name} className="grid grid-cols-[2.5rem_minmax(0,1fr)] items-baseline gap-4 border-b border-line py-5">
+          <span className="text-sm tabular-nums text-ink-faint">0{index + 1}</span>
+          <div>
+            <p className="text-lg font-semibold tracking-tight text-ink">{item.name}</p>
+            <p className="mt-1 text-sm text-ink-soft">{item.text}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  )
+}
 
 export function HomePage() {
-  usePageTitle('SEOAH.STUDIO — 디지털 프로덕트 스튜디오')
-  const [readyName, setReadyName] = useState<ReadyPreviewName>('Startup')
+  usePageTitle('SEOAH.STUDIO — 디지털 제품 플랫폼')
 
   return (
     <main>
       <PageHero
-        eyebrow="SEOAH.STUDIO"
+        eyebrow="Digital products for business"
         title={
           <>
-            사업에 필요한
+            사업에 필요한 디지털 제품,
             <br />
-            디지털 제품,
-            <br />
-            처음부터 만들
-            <br />
-            필요 없습니다.
+            처음부터 만들 필요 없습니다.
           </>
         }
-        description="바로 사용할 수 있는 웹사이트부터 맞춤형 MVP와 디지털 제품까지. SEOAH.STUDIO가 사업의 시작을 제품으로 만듭니다."
+        description="웹사이트부터 MVP, 업무도구와 디지털 제품까지. 준비된 제품에서 시작하거나 내 사업에 맞춰 제작하세요."
         actions={
           <>
-            <ButtonLink to="/ready">제품 둘러보기</ButtonLink>
+            <ButtonLink to="/ready">Ready 제품 보기</ButtonLink>
             <ButtonLink to={REQUEST_PATH} variant="secondary">
               프로젝트 의뢰하기
             </ButtonLink>
           </>
         }
-        visual={<ProductComposition />}
+        visual={<OfferMap />}
       />
 
       <MarketingSection>
-        <SectionHeading title="무엇이 필요하세요?" />
-        <PathList items={paths} />
+        <SectionHeading title="어떤 방식으로 시작하시겠어요?" />
+        <div className="mt-14 grid border-t-2 border-ink lg:mt-16 lg:grid-cols-2">
+          <article className="border-b border-line py-10 lg:border-b-0 lg:border-r lg:pr-12 lg:pt-12">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-ink-faint">Ready</p>
+            <h3 className="mt-4 text-title text-ink">이미 준비된 제품에서 시작합니다.</h3>
+            <ul className="mt-8 space-y-3 text-base text-ink-soft">
+              <li>빠르게 선택</li>
+              <li>필요한 부분만 변경</li>
+              <li>바로 시작</li>
+            </ul>
+            <ButtonLink to="/ready" variant="secondary" className="mt-10">
+              Ready 보기
+            </ButtonLink>
+          </article>
+          <article className="py-10 lg:pl-12 lg:pt-12">
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-ink-faint">Studio</p>
+            <h3 className="mt-4 text-title text-ink">내 사업에 맞게 새로 만듭니다.</h3>
+            <ul className="mt-8 space-y-3 text-base text-ink-soft">
+              <li>문제 정의</li>
+              <li>기획과 디자인</li>
+              <li>개발과 출시</li>
+            </ul>
+            <ButtonLink to="/studio" className="mt-10">
+              Studio 시작하기
+            </ButtonLink>
+          </article>
+        </div>
       </MarketingSection>
 
       <MarketingSection surface="paper">
-        <SectionHeading
-          eyebrow="Ready"
-          title="Ready to Launch."
-          description="검증된 구조로 만든 웹사이트를 사업에 맞게 선택하고 바로 시작하세요."
-        />
-        <div className="mt-14 grid items-start gap-8 lg:mt-16 lg:grid-cols-[minmax(0,1.45fr)_minmax(15rem,0.55fr)] lg:gap-10">
-          <ReadyPreview name={readyName} />
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-1" role="list">
-            {readyCategories.map((name) => (
-              <button
-                key={name}
-                type="button"
-                onClick={() => setReadyName(name)}
-                className="text-left"
-                aria-pressed={readyName === name}
-              >
-                <ReadyThumb name={name} active={readyName === name} />
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink to="/ready">Ready 제품 보기</ButtonLink>
-          <ButtonLink to="/ready#how" variant="secondary">
-            어떻게 이용하나요?
-          </ButtonLink>
-        </div>
-      </MarketingSection>
-
-      <MarketingSection>
-        <div className="grid items-end gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16">
-          <SectionHeading
-            eyebrow="Studio"
-            title="아이디어를 실제 제품으로."
-            description="기획부터 UX/UI, 개발, 배포까지 하나의 흐름으로 진행합니다."
-          />
-          <ol className="grid gap-0 sm:grid-cols-5">
-            {studioFlow.map((step, index) => (
-              <li key={step} className="border-t-2 border-ink pt-5 sm:px-3 sm:first:pl-0">
-                <p className="text-2xl font-semibold tabular-nums tracking-[-0.04em] text-ink">0{index + 1}</p>
-                <p className="mt-3 text-base font-medium tracking-tight text-ink">{step}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-        <p className="mt-16 text-xs font-medium uppercase tracking-[0.16em] text-ink-soft">제작 가능 범위</p>
-        <ul className="mt-6 grid gap-8 border-t border-line pt-8 sm:grid-cols-2 lg:grid-cols-4">
+        <SectionHeading eyebrow="Studio" title="만드는 제품" />
+        <ul className="mt-12 border-t border-line">
           {studioOffers.map((offer) => (
-            <li key={offer.name}>
-              <p className="text-xl font-semibold tracking-tight text-ink">{offer.name}</p>
-              <p className="mt-2 text-base text-ink-soft">{offer.text}</p>
+            <li key={offer.name} className="grid gap-2 border-b border-line py-7 sm:grid-cols-[12rem_minmax(0,1fr)] sm:items-baseline">
+              <h3 className="text-lg font-semibold tracking-tight text-ink">{offer.name}</h3>
+              <p className="text-base text-ink-soft">{offer.text}</p>
             </li>
           ))}
         </ul>
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink to="/studio" variant="secondary">
-            Studio 알아보기
-          </ButtonLink>
-          <ButtonLink to={REQUEST_PATH}>프로젝트 의뢰하기</ButtonLink>
-        </div>
-      </MarketingSection>
-
-      <MarketingSection surface="paper">
-        <SectionHeading
-          eyebrow="Care"
-          title="출시가 끝이 아니니까."
-          description="웹사이트와 제품이 안정적으로 운영될 수 있도록 필요한 수정과 운영을 이어갑니다."
-        />
-        <div className="mt-14 grid gap-12 lg:mt-16 lg:grid-cols-3 lg:gap-0">
-          {carePlans.map((plan) => (
-            <article key={plan.name} className="lg:border-l lg:border-line lg:px-8 lg:first:border-l-0 lg:first:pl-0 lg:last:pr-0">
-              <h3 className="text-2xl font-semibold tracking-[-0.03em] text-ink">{plan.name}</h3>
-              <p className="mt-3 text-base font-medium text-ink">{plan.who}</p>
-              <ul className="mt-6 space-y-2">
-                {plan.items.map((item) => (
-                  <li key={item} className="text-base text-ink-soft">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-8 text-xl font-semibold tracking-tight text-ink">
-                {plan.price}
-                <span className="ml-1 text-base font-medium text-ink-soft">{plan.unit}</span>
-              </p>
-              <Link to="/care" className="mt-6 inline-flex min-h-11 items-center text-sm font-medium text-ink underline decoration-line underline-offset-4 transition-colors hover:decoration-ink">
-                자세히 보기
-              </Link>
-            </article>
-          ))}
-        </div>
       </MarketingSection>
 
       <MarketingSection>
-        <SectionHeading eyebrow="Work" title="Selected Work" />
-        <div className="mt-14 grid border border-line bg-paper lg:mt-16 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-          <div className="relative min-h-72 border-b border-line p-6 sm:min-h-96 sm:p-8 lg:border-b-0 lg:border-r" aria-hidden>
-            <div className="absolute inset-6 border border-line sm:inset-8">
-              <div className="flex h-8 items-center gap-2 border-b border-line px-3">
-                <span className="h-1.5 w-1.5 bg-ink" />
-                <span className="h-1.5 w-1.5 bg-line" />
-                <span className="ml-2 h-px flex-1 bg-line" />
-              </div>
-              <div className="grid h-[calc(100%-2rem)] grid-cols-[5rem_minmax(0,1fr)]">
-                <div className="border-r border-line p-3">
-                  <div className="h-2 w-full bg-canvas" />
-                  <div className="mt-3 h-2 w-4/5 bg-canvas" />
-                  <div className="mt-3 h-2 w-3/5 bg-canvas" />
-                </div>
-                <div className="p-4">
-                  <div className="h-3 w-2/5 bg-canvas" />
-                  <div className="mt-4 grid grid-cols-2 gap-3">
-                    <div className="h-16 border border-line" />
-                    <div className="h-16 border border-line bg-signal-soft" />
-                  </div>
-                  <div className="mt-3 h-2 w-3/5 bg-canvas" />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col justify-end p-6 sm:p-10">
-            <p className="text-xs font-medium uppercase tracking-[0.16em] text-ink-soft">Private client work</p>
-            <p className="mt-4 max-w-[14em] text-3xl font-semibold leading-tight tracking-[-0.03em] text-ink sm:text-4xl">
-              Case studies are being prepared.
-            </p>
-            <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2">
-              {workCategories.map((category) => (
-                <li key={category} className="text-base font-medium text-ink">
-                  {category}
-                </li>
-              ))}
-            </ul>
-            <p className="mt-6 max-w-copy text-lead text-ink-soft">공개할 수 있는 작업이 정리되는 대로 이 자리에 올립니다.</p>
-          </div>
-        </div>
-      </MarketingSection>
-
-      <MarketingSection surface="paper">
-        <SectionHeading
-          title="기획 따로, 디자인 따로, 개발 따로 맡기지 않아도 됩니다."
-          description="SEOAH.STUDIO는 페이지를 납품하는 제작사가 아니라, 사업에 필요한 디지털 제품을 하나의 흐름으로 만드는 스튜디오입니다."
-        />
-        <ol className="mt-16 border-t-2 border-ink lg:mt-20 lg:flex">
-          {practice.map((item, index) => (
-            <li key={item} className="flex-1 border-t border-line py-6 lg:border-l lg:border-t-0 lg:px-6 lg:py-8 lg:first:border-l-0 lg:first:pl-0">
-              <p className="text-sm font-medium tabular-nums tracking-[0.14em] text-ink-soft">0{index + 1}</p>
-              <p className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-ink sm:text-4xl lg:text-5xl">{item}</p>
+        <SectionHeading title="진행은 한 계정 안에서 이어집니다." description="문의부터 납품까지 따로 흩어지지 않습니다." />
+        <ol className="mt-14 grid gap-0 sm:grid-cols-2 lg:mt-16 lg:grid-cols-4">
+          {steps.map((step, index) => (
+            <li key={step.name} className="border-t-2 border-ink py-6 lg:px-5 lg:first:pl-0">
+              <p className="text-sm font-medium tabular-nums text-ink-faint">0{index + 1}</p>
+              <p className="mt-3 text-2xl font-semibold tracking-tight text-ink">{step.name}</p>
+              <p className="mt-2 text-sm text-ink-soft">{step.text}</p>
             </li>
           ))}
         </ol>
+        <p className="mt-10 text-sm leading-relaxed text-ink-soft">{flow.join(' → ')}</p>
+      </MarketingSection>
+
+      <MarketingSection surface="paper">
+        <SectionHeading eyebrow="Ready" title="처음부터 만들 필요 없는 제품." description="판매 중인 카탈로그는 아직 없습니다. 준비되는 대로 이 자리에서 고를 수 있습니다." />
+        <p className="mt-10 text-xs font-medium tracking-[0.16em] text-signal">PREPARING</p>
+        <div className="mt-8">
+          <ButtonLink to="/ready" variant="secondary">
+            Ready 페이지 보기
+          </ButtonLink>
+        </div>
       </MarketingSection>
 
       <MarketingSection>
-        <h2 className="max-w-[12em] text-display text-ink">
-          무엇을 만들어야 할지
-          <br />
-          아직 정확하지 않아도 괜찮습니다.
-        </h2>
-        <p className="mt-6 max-w-copy text-lead text-ink-soft">
-          현재 상황을 알려주시면 Ready 제품이 맞는지, 맞춤 제작이 필요한지부터 함께 정리합니다.
-        </p>
+        <SectionHeading eyebrow="Care" title="출시가 끝이 아닙니다." description="운영, 개선, 업데이트, 기술 관리를 필요한 범위에서 이어갑니다." />
+        <ul className="mt-12 border-t border-line">
+          {carePlans.map((plan) => (
+            <li key={plan.name} className="grid gap-2 border-b border-line py-7 sm:grid-cols-[16rem_minmax(0,1fr)_auto] sm:items-baseline">
+              <h3 className="text-lg font-semibold tracking-tight text-ink">{plan.name}</h3>
+              <p className="text-base text-ink-soft">{plan.text}</p>
+              <p className="text-sm font-medium text-ink">{plan.price}</p>
+            </li>
+          ))}
+        </ul>
+        <Link to="/care" className="mt-8 inline-flex min-h-11 items-center text-sm font-medium text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+          Care 자세히 보기
+        </Link>
+      </MarketingSection>
+
+      <MarketingSection surface="paper">
+        <SectionHeading eyebrow="SaaS" title="팀이 쓰는 도구" description="개발 중이며, 아직 판매하지 않습니다." />
+        <ul className="mt-12 border-t border-line">
+          {saasProducts.map((product) => (
+            <li key={product.name} className="grid gap-2 border-b border-line py-7 sm:grid-cols-[12rem_minmax(0,1fr)_auto] sm:items-baseline">
+              <h3 className="text-lg font-semibold tracking-tight text-ink">{product.name}</h3>
+              <p className="text-base text-ink-soft">{product.text}</p>
+              <p className="text-xs font-medium tracking-[0.14em] text-signal">IN DEVELOPMENT</p>
+            </li>
+          ))}
+        </ul>
+      </MarketingSection>
+
+      <MarketingSection>
+        <h2 className="max-w-[14em] text-display text-ink">필요한 제품이 있다면, 이제 시작하면 됩니다.</h2>
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink to={REQUEST_PATH}>프로젝트 이야기하기</ButtonLink>
-          <ButtonLink to="/contact" variant="secondary">
-            문의하기
+          <ButtonLink to={REQUEST_PATH}>프로젝트 시작</ButtonLink>
+          <ButtonLink to="/ready" variant="secondary">
+            Ready 둘러보기
           </ButtonLink>
         </div>
       </MarketingSection>

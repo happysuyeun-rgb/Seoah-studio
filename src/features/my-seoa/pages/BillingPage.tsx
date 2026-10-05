@@ -4,11 +4,11 @@ import { PageHeader, SectionHeader } from '../components/SectionHeader'
 import { portalData } from '../portalData'
 
 export function BillingPage() {
-  usePageTitle('Billing — MY SEOA')
+  usePageTitle('결제 — MY SEOA')
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title="Billing" description="결제 내역을 확인합니다." />
+      <PageHeader title="결제" description="결제 내역을 확인합니다." />
       <section>
         <SectionHeader title="Payment History" />
         {portalData.payments.length === 0 ? (

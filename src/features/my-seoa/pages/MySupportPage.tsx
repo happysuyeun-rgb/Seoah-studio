@@ -7,11 +7,11 @@ import { portalData } from '../portalData'
 import { ticketStatuses } from '../types'
 
 export function MySupportPage() {
-  usePageTitle('Support — MY SEOA')
+  usePageTitle('지원 — MY SEOA')
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title="Support" description="문의와 답변 상태를 확인합니다." />
+      <PageHeader title="지원" description="문의와 답변 상태를 확인합니다." />
       <section className="mb-12">
         <SectionHeader title="New Inquiry" />
         <ButtonLink to="/contact" size="sm">

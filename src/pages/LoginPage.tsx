@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { PageContainer } from '../components/ui/PageContainer'
+import { postLoginPath } from '../lib/postLogin'
 import { supabase } from '../lib/supabase'
 import { useAuthStore } from '../store/authStore'
 
@@ -10,7 +12,7 @@ export function LoginPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuthStore()
-  const returnTo = searchParams.get('returnTo') ?? '/'
+  const returnTo = postLoginPath(searchParams.get('returnTo'))
   const [devEmail, setDevEmail] = useState(DEV_EMAIL)
   const [devPassword, setDevPassword] = useState(DEV_PASSWORD)
   const [devError, setDevError] = useState<string | null>(null)
@@ -67,94 +69,84 @@ export function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-[calc(100vh-3.5rem)] items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="block w-full min-h-[44px] text-center text-2xl font-bold text-gray-900 hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          SEOAH.STUDIO
-        </button>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          로그인하면 AI 자동 커스텀을 시작할 수 있습니다.
-        </p>
-        <div className="mt-8 space-y-3">
-          <button
-            type="button"
-            onClick={handleKakao}
-            className="flex w-full min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[#FEE500] py-3 font-medium text-gray-900 hover:bg-[#FEE500]/90"
-          >
-            카카오 로그인
-          </button>
-          <button
-            type="button"
-            onClick={handleGoogle}
-            className="flex w-full min-h-[44px] items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white py-3 font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Google 로그인
-          </button>
-        </div>
-        <p className="mt-6 text-center text-xs text-gray-400">로그인 시 이용약관에 동의합니다.</p>
-        <p className="mt-4 text-center text-sm text-gray-600">
-          계정이 없으신가요?{' '}
-          <Link to="/signup" className="font-medium text-primary hover:underline">
-            회원가입
-          </Link>
-        </p>
-
-        {import.meta.env.DEV && (
-          <div className="mt-8 rounded-lg border-2 border-amber-400 bg-gray-100 p-4">
-            <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-amber-800">
-              <span aria-hidden>⚠</span> 개발 전용
-            </p>
-            <div className="space-y-2">
-              <input
-                type="email"
-                value={devEmail}
-                onChange={(e) => setDevEmail(e.target.value)}
-                placeholder="이메일"
-                className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-              />
-              <input
-                type="password"
-                value={devPassword}
-                onChange={(e) => setDevPassword(e.target.value)}
-                placeholder="비밀번호"
-                className="w-full rounded border border-gray-300 px-3 py-2 text-sm"
-              />
-              {devError && <p className="text-xs text-red-600">{devError}</p>}
-              <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={handleDevLogin}
-                  disabled={devLoading}
-                  className="min-h-[40px] rounded bg-gray-600 px-3 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
-                >
-                  개발 로그인
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDevMockLogin}
-                  className="min-h-[40px] rounded border border-gray-400 bg-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300"
-                >
-                  목업 로그인 (Supabase 없음)
-                </button>
-              </div>
-            </div>
+    <main>
+      <PageContainer className="py-16 sm:py-24">
+        <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:gap-16">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.16em] text-ink-faint">SEOAH.STUDIO</p>
+            <h1 className="mt-4 text-title text-ink">구매와 프로젝트를 이어서 관리합니다.</h1>
+            <p className="mt-5 max-w-copy text-lead text-ink-soft">로그인하면 MY SEOA에서 진행 상황, 제안, 결제를 확인합니다.</p>
           </div>
-        )}
+          <div className="border-t-2 border-ink pt-8 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={handleKakao}
+                className="flex min-h-11 w-full items-center justify-center bg-[#FEE500] px-4 text-sm font-medium text-ink hover:opacity-90"
+              >
+                카카오 로그인
+              </button>
+              <button
+                type="button"
+                onClick={handleGoogle}
+                className="flex min-h-11 w-full items-center justify-center border border-line bg-paper px-4 text-sm font-medium text-ink hover:bg-canvas"
+              >
+                Google 로그인
+              </button>
+            </div>
+            <p className="mt-6 text-xs text-ink-faint">로그인 시 이용약관에 동의합니다.</p>
+            <p className="mt-4 text-sm text-ink-soft">
+              계정이 없으신가요?{' '}
+              <Link to="/signup" className="font-medium text-ink underline decoration-line underline-offset-4 hover:decoration-ink">
+                회원가입
+              </Link>
+            </p>
+            <button type="button" onClick={() => navigate('/')} className="mt-6 inline-flex min-h-11 items-center text-sm text-ink-soft hover:text-ink">
+              홈으로
+            </button>
 
-        <p className="mt-4 text-center">
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="min-h-[44px] text-sm text-primary hover:underline"
-        >
-          ← 홈으로
-        </button>
-        </p>
-      </div>
+            {import.meta.env.DEV && (
+              <div className="mt-8 border border-line bg-canvas p-4">
+                <p className="mb-2 text-sm font-semibold text-ink">개발 전용</p>
+                <div className="space-y-2">
+                  <input
+                    type="email"
+                    value={devEmail}
+                    onChange={(e) => setDevEmail(e.target.value)}
+                    placeholder="이메일"
+                    className="min-h-11 w-full border border-line bg-paper px-3 text-sm"
+                  />
+                  <input
+                    type="password"
+                    value={devPassword}
+                    onChange={(e) => setDevPassword(e.target.value)}
+                    placeholder="비밀번호"
+                    className="min-h-11 w-full border border-line bg-paper px-3 text-sm"
+                  />
+                  {devError && <p className="text-xs text-ink">{devError}</p>}
+                  <div className="flex flex-col gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDevLogin}
+                      disabled={devLoading}
+                      className="min-h-11 bg-ink px-3 text-sm font-medium text-paper hover:opacity-90 disabled:opacity-50"
+                    >
+                      개발 로그인
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDevMockLogin}
+                      className="min-h-11 border border-line bg-paper px-3 text-sm font-medium text-ink hover:bg-canvas"
+                    >
+                      목업 로그인 (Supabase 없음)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </PageContainer>
     </main>
   )
 }

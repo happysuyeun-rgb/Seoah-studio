@@ -21,7 +21,7 @@ const tabs: { id: ProposalTab; label: string }[] = [
 ]
 
 export function CustomerProposalsPage() {
-  usePageTitle('Proposals — MY SEOA')
+  usePageTitle('제안 — MY SEOA')
   const { proposals, ready } = useProposalSource()
   const [tab, setTab] = useState<ProposalTab>('awaiting_review')
   const rows = useMemo(
@@ -31,7 +31,7 @@ export function CustomerProposalsPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title="Proposals" description="견적과 조건을 확인합니다. 이 화면의 예시는 저장되지 않습니다." />
+      <PageHeader title="제안" description="견적과 조건을 확인합니다. 이 화면의 예시는 저장되지 않습니다." />
       <FilterTabs value={tab} options={tabs} onChange={setTab} />
       {!ready ? <p className="text-sm text-ink-faint">로딩 중...</p> : null}
       {ready && rows.length === 0 ? <EmptyState title="확인할 견적 또는 계약이 없습니다." /> : null}

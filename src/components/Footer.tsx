@@ -48,7 +48,7 @@ export function Footer() {
           <div>
             <p className="text-lg font-semibold tracking-tight text-ink">SEOAH.STUDIO</p>
             <p className="mt-4 max-w-xs text-base leading-relaxed text-ink">
-              스타트업과 작은 비즈니스를 위한 디지털 제품 스튜디오.
+              사업에 필요한 디지털 제품을 고르고, 만들고, 이어 운영합니다.
             </p>
           </div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">

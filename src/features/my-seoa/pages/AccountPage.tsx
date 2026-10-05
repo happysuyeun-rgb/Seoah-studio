@@ -13,14 +13,14 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function AccountPage() {
-  usePageTitle('Account — MY SEOA')
+  usePageTitle('계정 — MY SEOA')
   const user = useAuthStore((state) => state.user)
   const name = typeof user?.user_metadata?.name === 'string' && user.user_metadata.name.trim() ? user.user_metadata.name : '—'
   const email = user?.email || '—'
 
   return (
     <div className="mx-auto max-w-3xl">
-      <PageHeader title="Account" description="프로필과 계정 설정을 확인합니다." />
+      <PageHeader title="계정" description="프로필과 계정 설정을 확인합니다." />
       <section>
         <SectionHeader title="Profile" />
         <dl>

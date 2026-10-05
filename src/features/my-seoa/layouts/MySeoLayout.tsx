@@ -3,14 +3,14 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useAuthStore } from '../../../store/authStore'
 
 const items = [
-  { to: '/my', label: 'Dashboard', end: true },
-  { to: '/my/purchases', label: 'Purchases', end: false },
-  { to: '/my/projects', label: 'Projects', end: false },
-  { to: '/my/proposals', label: 'Proposals', end: false },
-  { to: '/my/billing', label: 'Billing', end: false },
-  { to: '/my/support', label: 'Support', end: false },
-  { to: '/my/notifications', label: 'Notifications', end: false },
-  { to: '/my/account', label: 'Account', end: false },
+  { to: '/my', label: '홈', end: true },
+  { to: '/my/purchases', label: '구매', end: false },
+  { to: '/my/projects', label: '프로젝트', end: false },
+  { to: '/my/proposals', label: '제안', end: false },
+  { to: '/my/billing', label: '결제', end: false },
+  { to: '/my/support', label: '지원', end: false },
+  { to: '/my/notifications', label: '알림', end: false },
+  { to: '/my/account', label: '계정', end: false },
 ] as const
 
 function displayName(name: unknown, email: string | undefined) {
@@ -24,7 +24,7 @@ function AccountBlock({ name, email, onLogout }: { name: string; email: string; 
     <div>
       <p className="truncate text-sm font-medium text-ink">{name}</p>
       <p className="truncate text-xs text-ink-faint">{email}</p>
-      <button type="button" onClick={onLogout} className="mt-3 text-sm text-ink-soft hover:text-ink">
+      <button type="button" onClick={onLogout} className="mt-3 inline-flex min-h-11 items-center text-sm text-ink-soft hover:text-ink">
         로그아웃
       </button>
     </div>
@@ -41,7 +41,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
             end={item.end}
             onClick={onNavigate}
             className={({ isActive }) =>
-              `block px-3 py-2 text-sm ${isActive ? 'bg-canvas font-medium text-ink' : 'text-ink-soft hover:text-ink'}`
+              `flex min-h-11 items-center px-3 text-sm ${isActive ? 'bg-canvas font-medium text-ink' : 'text-ink-soft hover:text-ink'}`
             }
           >
             {item.label}

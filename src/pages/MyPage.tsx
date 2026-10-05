@@ -159,7 +159,7 @@ export function MyPage() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-8 sm:px-8">
-      <header className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-4">
+      <header className="mb-6 flex items-center justify-between gap-4 border border-line bg-paper p-4">
         <div className="flex min-w-0 flex-1 items-center gap-4">
           {user?.user_metadata?.avatar_url ? (
             <img
@@ -168,37 +168,37 @@ export function MyPage() {
               className="h-12 w-12 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/20 text-lg font-semibold text-primary">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-signal-soft text-lg font-semibold text-signal">
               {initial}
             </div>
           )}
           <div className="min-w-0">
-            <p className="truncate font-medium text-gray-900">
+            <p className="truncate font-medium text-ink">
               {(user?.user_metadata?.name as string) || user?.email || '사용자'}
             </p>
-            <p className="truncate text-sm text-gray-500">{user?.email ?? ''}</p>
+            <p className="truncate text-sm text-ink-faint">{user?.email ?? ''}</p>
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Link
             to="/mypage/settings"
-            className="min-h-[44px] py-2 text-sm text-gray-500 hover:text-gray-700 hover:underline"
+            className="min-h-[44px] py-2 text-sm text-ink-faint hover:text-ink hover:underline"
           >
             설정
           </Link>
           <button
             type="button"
             onClick={() => signOut()}
-            className="min-h-[44px] shrink-0 text-sm text-gray-500 hover:text-gray-700 hover:underline"
+            className="min-h-[44px] shrink-0 text-sm text-ink-faint hover:text-ink hover:underline"
           >
             로그아웃
           </button>
         </div>
       </header>
 
-      <h1 className="text-2xl font-bold text-gray-900">마이페이지</h1>
+      <h1 className="text-2xl font-bold text-ink">마이페이지</h1>
 
-      <nav className="mt-4 flex border-b border-gray-200" role="tablist">
+      <nav className="mt-4 flex border-b border-line" role="tablist">
         <button
           type="button"
           role="tab"
@@ -208,7 +208,7 @@ export function MyPage() {
             setActiveTab('projects')
           }}
           className={`min-h-[44px] border-b-2 px-4 py-3 text-sm font-medium ${
-            activeTab === 'projects' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
+            activeTab === 'projects' ? 'border-signal text-signal' : 'border-transparent text-ink-faint hover:text-ink'
           }`}
         >
           내 프로젝트
@@ -222,7 +222,7 @@ export function MyPage() {
             setActiveTab('downloads')
           }}
           className={`min-h-[44px] border-b-2 px-4 py-3 text-sm font-medium ${
-            activeTab === 'downloads' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
+            activeTab === 'downloads' ? 'border-signal text-signal' : 'border-transparent text-ink-faint hover:text-ink'
           }`}
         >
           다운로드 내역
@@ -233,12 +233,12 @@ export function MyPage() {
       <section className="mt-6">
         <h2 className="sr-only">내 프로젝트</h2>
         {projects.length === 0 ? (
-          <div className="mt-4 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
-            <p className="text-gray-500">아직 만든 프로젝트가 없습니다.</p>
+          <div className="mt-4 border border-dashed border-line bg-canvas p-8">
+            <p className="text-ink-faint">아직 만든 프로젝트가 없습니다.</p>
             <button
               type="button"
               onClick={() => navigate('/')}
-              className="mt-4 rounded-lg bg-primary px-4 py-2 text-white hover:bg-primary/90"
+              className="mt-4 inline-flex min-h-11 items-center bg-signal px-4 text-sm text-white hover:bg-signal-hover"
             >
               시작하기
             </button>
@@ -249,24 +249,24 @@ export function MyPage() {
               const templateName = p.templates?.name ?? '프로젝트'
               const thumbUrl = p.templates?.thumbnail_url
               return (
-              <div key={p.id} className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-                <div className="aspect-[4/3] w-full overflow-hidden bg-gray-100">
+              <div key={p.id} className="overflow-hidden border border-line bg-paper">
+                <div className="aspect-[4/3] w-full overflow-hidden bg-canvas">
                   {thumbUrl ? (
                     <img src={thumbUrl} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-center text-sm text-gray-500">
+                    <div className="flex h-full w-full items-center justify-center text-center text-sm text-ink-faint">
                       {templateName}
                     </div>
                   )}
                 </div>
                 <div className="p-4">
-                  <p className="font-medium text-gray-900">{templateName}</p>
-                  <p className="text-sm text-gray-500">{statusLabel[p.status] ?? p.status}</p>
+                  <p className="font-medium text-ink">{templateName}</p>
+                  <p className="text-sm text-ink-faint">{statusLabel[p.status] ?? p.status}</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => goProject(p.id, p.status)}
-                      className="text-sm text-primary hover:underline"
+                      className="text-sm text-signal hover:underline"
                     >
                       보기
                     </button>
@@ -291,12 +291,12 @@ export function MyPage() {
       <section className="mt-6">
         <h2 className="sr-only">다운로드 내역</h2>
         {downloads.length === 0 ? (
-          <p className="mt-4 text-sm text-gray-500">다운로드 내역이 없습니다.</p>
+          <p className="mt-4 text-sm text-ink-faint">다운로드 내역이 없습니다.</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b text-left text-gray-600">
+                <tr className="border-b border-line text-left text-ink-soft">
                   <th className="py-2">파일 유형</th>
                   <th className="py-2">다운로드 시각</th>
                   <th className="py-2">동작</th>
@@ -316,7 +316,7 @@ export function MyPage() {
                           <button
                             type="button"
                             onClick={() => handleRedownload(d.order_id, projectId)}
-                            className="text-primary hover:underline"
+                            className="text-signal hover:underline"
                           >
                             다시 다운로드
                           </button>
@@ -335,7 +335,7 @@ export function MyPage() {
                 })}
               </tbody>
             </table>
-            <p className="mt-3 text-xs text-gray-500">다운로드가 되지 않으면 브라우저의 팝업·다운로드 허용 설정을 확인해 주세요.</p>
+            <p className="mt-3 text-xs text-ink-faint">다운로드가 되지 않으면 브라우저의 팝업·다운로드 허용 설정을 확인해 주세요.</p>
           </div>
         )}
       </section>

@@ -24,7 +24,7 @@ const emptyCopy: Record<ProjectTab, string> = {
 }
 
 export function ProjectsPage() {
-  usePageTitle('Projects — MY SEOA')
+  usePageTitle('프로젝트 — MY SEOA')
   const { engagements, ready } = useEngagementSource()
   const [tab, setTab] = useState<ProjectTab>('active')
   const rows = engagements
@@ -33,7 +33,7 @@ export function ProjectsPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title="Projects" description="Studio에서 진행하는 프로젝트입니다." />
+      <PageHeader title="프로젝트" description="Studio에서 진행하는 프로젝트입니다." />
       {import.meta.env.DEV ? <p className="mb-4 text-xs text-ink-faint">개발 환경 예시입니다. 저장되지 않습니다.</p> : null}
       <FilterTabs value={tab} options={tabs} onChange={setTab} />
       {!ready ? <p className="text-sm text-ink-faint">로딩 중...</p> : null}

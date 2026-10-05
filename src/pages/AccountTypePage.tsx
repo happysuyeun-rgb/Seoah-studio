@@ -5,6 +5,7 @@ import { TextField } from '../components/marketing/Fields'
 import { MarketingSection } from '../components/marketing/MarketingSection'
 import { PageHero } from '../components/marketing/PageHero'
 import { usePageTitle } from '../components/marketing/usePageTitle'
+import { takeStoredReturnTo } from '../lib/postLogin'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { accountTypes, type AccountType } from '../lib/signupSchema'
 import { DEV_MOCK_USER_ID_CONST, useAuthStore } from '../store/authStore'
@@ -46,7 +47,7 @@ export function AccountTypePage() {
         return
       }
       await supabase.auth.updateUser({ data: { account_type: type, company_name: company } })
-      navigate('/', { replace: true })
+      navigate(takeStoredReturnTo(), { replace: true })
     } catch {
       setError('계정 유형을 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.')
     } finally {
@@ -94,9 +95,9 @@ export function AccountTypePage() {
           <Button type="submit" disabled={submitting || isLoading}>
             {submitting ? '저장 중' : '저장'}
           </Button>
-          <Link to="/" className="text-sm text-ink-soft">
+          <button type="button" onClick={() => navigate(takeStoredReturnTo(), { replace: true })} className="inline-flex min-h-11 items-center text-sm text-ink-soft">
             나중에 선택
-          </Link>
+          </button>
         </form>
       </MarketingSection>
     </main>

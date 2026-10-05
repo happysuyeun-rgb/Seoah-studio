@@ -9,7 +9,7 @@ import { notificationCategories, type NotificationCategory } from '../types'
 type Filter = 'all' | NotificationCategory
 
 export function NotificationsPage() {
-  usePageTitle('Notifications — MY SEOA')
+  usePageTitle('알림 — MY SEOA')
   const [filter, setFilter] = useState<Filter>('all')
   const rows = portalData.notifications.filter((item) => filter === 'all' || item.category === filter)
   const options: { id: Filter; label: string }[] = [
@@ -19,7 +19,7 @@ export function NotificationsPage() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader title="Notifications" />
+      <PageHeader title="알림" description="확인이 필요한 소식만 모읍니다." />
       <FilterTabs value={filter} options={options} onChange={setFilter} />
       {rows.length === 0 ? (
         <EmptyState title="새 알림이 없습니다." />
