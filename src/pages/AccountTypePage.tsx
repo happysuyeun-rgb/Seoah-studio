@@ -92,12 +92,9 @@ export function AccountTypePage() {
             <TextField label="회사명" name="companyName" value={companyName} onChange={(event) => setCompanyName(event.target.value)} autoComplete="organization" />
           ) : null}
           {error ? <p className="text-sm text-ink">{error}</p> : null}
-          <Button type="submit" disabled={submitting || isLoading}>
+          <Button type="submit" disabled={submitting || isLoading || accountType === ''}>
             {submitting ? '저장 중' : '저장'}
           </Button>
-          <button type="button" onClick={() => navigate(takeStoredReturnTo(), { replace: true })} className="inline-flex min-h-11 items-center text-sm text-ink-soft">
-            나중에 선택
-          </button>
         </form>
       </MarketingSection>
     </main>

@@ -5,6 +5,7 @@ import { TextField } from '../components/marketing/Fields'
 import { MarketingSection } from '../components/marketing/MarketingSection'
 import { PageHero } from '../components/marketing/PageHero'
 import { usePageTitle } from '../components/marketing/usePageTitle'
+import { destinationAfterSignup } from '../lib/postLogin'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
 import { signupSchema, type AccountType } from '../lib/signupSchema'
 
@@ -70,8 +71,9 @@ export function SignupPage() {
         setError('이미 가입된 이메일입니다.')
         return
       }
-      if (data.session) {
-        navigate('/', { replace: true })
+      const next = destinationAfterSignup(Boolean(data.session))
+      if (next) {
+        navigate(next, { replace: true })
         return
       }
       setNotice('확인 메일을 보냈습니다. 메일의 링크를 연 뒤 로그인해 주세요.')

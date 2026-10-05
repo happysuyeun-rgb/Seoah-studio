@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { postLoginPath } from '../lib/postLogin'
+import { postLoginPath, requiresAccountType } from '../lib/postLogin'
 import { supabase } from '../lib/supabase'
 
 export function AuthCallbackPage() {
@@ -33,10 +33,10 @@ export function AuthCallbackPage() {
             .select('account_type')
             .eq('id', session.user.id)
             .maybeSingle()
-          if (!profileError && (profile == null || profile.account_type == null)) {
+          if (!profileError && requiresAccountType({ isOAuth, isRecent, accountType: profile?.account_type ?? null })) {
             if (returnToFromQuery) {
               try {
-                sessionStorage.setItem('seoah_returnTo', returnToFromQuery)
+                sessionStorage.setItem('seoah_returnTo', postLoginPath(returnToFromQuery))
               } catch (_) {}
             }
             navigate('/account-type', { replace: true })
